@@ -50,9 +50,9 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
     try {
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.camera,
-        imageQuality: 70, // Reduced quality to prevent memory issues
-        maxWidth: 1024, // Limit image size
-        maxHeight: 1024,
+        imageQuality: 50, // Further reduced quality to prevent Firebase size issues
+        maxWidth: 800, // Smaller image size
+        maxHeight: 800,
       );
 
       if (image != null) {
@@ -72,9 +72,9 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
     try {
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.gallery,
-        imageQuality: 70, // Reduced quality to prevent memory issues
-        maxWidth: 1024, // Limit image size
-        maxHeight: 1024,
+        imageQuality: 50, // Further reduced quality to prevent Firebase size issues
+        maxWidth: 800, // Smaller image size
+        maxHeight: 800,
       );
 
       if (image != null) {

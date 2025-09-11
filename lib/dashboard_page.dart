@@ -22,11 +22,24 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _loadReports();
+  }
+
+  Future<void> _loadReports() async {
     final siteProvider = Provider.of<SiteProvider>(context, listen: false);
     final reportProvider = Provider.of<ReportProvider>(context, listen: false);
 
     if (siteProvider.currentSite != null) {
-      reportProvider.loadReports(siteId: siteProvider.currentSite!.id);
+      await reportProvider.loadReports(siteId: siteProvider.currentSite!.id);
+    }
+  }
+
+  Future<void> _refreshReports() async {
+    final siteProvider = Provider.of<SiteProvider>(context, listen: false);
+    final reportProvider = Provider.of<ReportProvider>(context, listen: false);
+
+    if (siteProvider.currentSite != null) {
+      await reportProvider.loadReports(siteId: siteProvider.currentSite!.id);
     }
   }
 
@@ -40,12 +53,14 @@ class _DashboardPageState extends State<DashboardPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () {
-              final siteProvider = Provider.of<SiteProvider>(context, listen: false);
-              final reportProvider = Provider.of<ReportProvider>(context, listen: false);
-              if (siteProvider.currentSite != null) {
-                reportProvider.refreshReports(siteId: siteProvider.currentSite!.id);
-              }
+            onPressed: () async {
+              await _refreshReports();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Reports refreshed'),
+                  duration: Duration(seconds: 1),
+                ),
+              );
             },
             tooltip: 'Refresh Reports',
           ),
@@ -83,13 +98,11 @@ class _DashboardPageState extends State<DashboardPage> {
                   Text(
                     'Error: ${reportProvider.error}',
                     style: const TextStyle(color: Colors.red),
+                    textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: () {
-                      reportProvider.loadReports(
-                          siteId: siteProvider.currentSite!.id);
-                    },
+                    onPressed: _refreshReports,
                     child: const Text('Retry'),
                   ),
                 ],
@@ -122,7 +135,7 @@ class _DashboardPageState extends State<DashboardPage> {
               Expanded(
                 child: _showMapView
                     ? _buildMapView(filteredReports)
-                    : _buildListView(filteredReports),
+                    : _buildListView(filteredReports, reportProvider),
               ),
             ],
           );
@@ -131,34 +144,28 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildListView(List<ReportModel> reports) {
+  Widget _buildListView(List<ReportModel> reports, ReportProvider reportProvider) {
     if (reports.isEmpty) {
       return RefreshIndicator(
-        onRefresh: () async {
-          final siteProvider = Provider.of<SiteProvider>(context, listen: false);
-          final reportProvider = Provider.of<ReportProvider>(context, listen: false);
-          if (siteProvider.currentSite != null) {
-            await reportProvider.refreshReports(siteId: siteProvider.currentSite!.id);
-          }
-        },
-        child: const Center(
-          child: Text(
-            'No reports found\nPull down to refresh',
-            style: TextStyle(fontSize: 16, color: Colors.grey),
-            textAlign: TextAlign.center,
+        onRefresh: _refreshReports,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height * 0.8,
+            child: const Center(
+              child: Text(
+                'No reports found\nPull down to refresh',
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+                textAlign: TextAlign.center,
+              ),
+            ),
           ),
         ),
       );
     }
 
     return RefreshIndicator(
-      onRefresh: () async {
-        final siteProvider = Provider.of<SiteProvider>(context, listen: false);
-        final reportProvider = Provider.of<ReportProvider>(context, listen: false);
-        if (siteProvider.currentSite != null) {
-          await reportProvider.refreshReports(siteId: siteProvider.currentSite!.id);
-        }
-      },
+      onRefresh: _refreshReports,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: reports.length,
@@ -180,10 +187,24 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildMapView(List<ReportModel> reports) {
-    final markers = reports.map((report) {
+    // Filter out reports without map coordinates
+    final reportsWithLocation = reports.where((report) => 
+        report.mapX != null && report.mapY != null).toList();
+
+    if (reportsWithLocation.isEmpty) {
+      return const Center(
+        child: Text(
+          'No reports with map locations\nSwitch to list view or create new reports with locations',
+          style: TextStyle(fontSize: 16, color: Colors.grey),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+
+    final markers = reportsWithLocation.map((report) {
       return MapMarker(
-        x: report.mapX ?? 0.1,
-        y: report.mapY ?? 0.1,
+        x: report.mapX!,
+        y: report.mapY!,
         color: _getStatusColor(report.status),
         icon: _getReportIcon(report.type),
         label: report.description,
@@ -192,11 +213,26 @@ class _DashboardPageState extends State<DashboardPage> {
 
     return CustomMapWidget(
       onLocationSelected: (x, y) {
-        // Optionally show a message or do nothing
+        // Show coordinates when tapping on map
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Selected: ${(x * 100).toStringAsFixed(1)}%, ${(y * 100).toStringAsFixed(1)}%'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
       },
       markers: markers,
-      mapImagePath:
-          'assets/images/company_map.png', // <-- Make sure this is set!
+      onMarkerTap: (marker) {
+        // Find the report that matches this marker
+        final report = reportsWithLocation.firstWhere(
+          (r) => r.mapX == marker.x && r.mapY == marker.y,
+          orElse: () => reportsWithLocation.firstWhere(
+            (r) => (r.mapX! - marker.x).abs() < 0.01 && (r.mapY! - marker.y).abs() < 0.01
+          )
+        );
+        
+        _showReportDetails(report);
+      },
     );
   }
 
@@ -224,26 +260,29 @@ class _DashboardPageState extends State<DashboardPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Report Details'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Type: ${report.type.name}'),
-            Text('Status: ${report.status.name}'),
-            Text('Zone: ${report.zone}'),
-            Text('Description: ${report.description}'),
-            if (report.mapX != null && report.mapY != null)
-              Text(
-                  'Map Location: ${(report.mapX! * 100).toStringAsFixed(1)}%, ${(report.mapY! * 100).toStringAsFixed(1)}%'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
+        title: const Text('Report Details'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Type: ${report.type.toString().split('.').last}'),
+              Text('Status: ${report.status.toString().split('.').last}'),
+              Text('Zone: ${report.zone}'),
+              const SizedBox(height: 8),
+              const Text('Description:', style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(report.description),
+              const SizedBox(height: 8),
+              if (report.mapX != null && report.mapY != null)
+                Text('Map Location: ${(report.mapX! * 100).toStringAsFixed(1)}%, ${(report.mapY! * 100).toStringAsFixed(1)}%'),
+                // Removed createdAt as it does not exist on ReportModel
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Close'),
+                ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

@@ -143,12 +143,12 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
           final completedCount = reportProvider.completedReports.length;
           
           return BottomNavigationBar(
-            currentIndex: _currentIndex,
-            onTap: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
             items: [
               _navigationItems[0], // Dashboard
               _navigationItems[1], // Map
@@ -187,9 +187,9 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
               ),
               _navigationItems[4], // Settings
             ],
-            selectedItemColor: const Color(0xFF2196F3),
-            unselectedItemColor: Colors.grey,
-            type: BottomNavigationBarType.fixed,
+        selectedItemColor: const Color(0xFF2196F3),
+        unselectedItemColor: Colors.grey,
+        type: BottomNavigationBarType.fixed,
           );
         },
       ),

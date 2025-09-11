@@ -147,32 +147,14 @@ class _CompletedReportsPageState extends State<CompletedReportsPage> {
     if (kIsWeb) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 12),
-        child: Column(
-          children: [
-            ReportCardWidget(
-              report: report,
-              onStatusChanged: (newStatus) {
-                // Completed reports can't change status, but we keep this for consistency
-                reportProvider.updateReportStatus(report.id, newStatus);
-              },
-              showDeleteButton: true,
-              onDelete: () => _showDeleteConfirmation(report, reportProvider),
-            ),
-            // Add a separate delete button as a test
-            Container(
-              width: double.infinity,
-              margin: const EdgeInsets.only(top: 8),
-              child: ElevatedButton.icon(
-                onPressed: () => _showDeleteConfirmation(report, reportProvider),
-                icon: const Icon(Icons.delete, size: 18),
-                label: const Text('DELETE REPORT (TEST)'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                ),
-              ),
-            ),
-          ],
+        child: ReportCardWidget(
+          report: report,
+          onStatusChanged: (newStatus) {
+            // Completed reports can't change status, but we keep this for consistency
+            reportProvider.updateReportStatus(report.id, newStatus);
+          },
+          showDeleteButton: true,
+          onDelete: () => _showDeleteConfirmation(report, reportProvider),
         ),
       );
     }

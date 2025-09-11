@@ -4,14 +4,14 @@ class CustomMapWidget extends StatefulWidget {
   final Function(double x, double y) onLocationSelected;
   final List<MapMarker> markers;
   final String mapImagePath;
-  final void Function(MapMarker)? onMarkerTap; // NEW
+  final void Function(MapMarker)? onMarkerTap;
 
   const CustomMapWidget({
     Key? key,
     required this.onLocationSelected,
     this.markers = const [],
     this.mapImagePath = 'assets/images/company_map.png',
-    this.onMarkerTap, // NEW
+    this.onMarkerTap,
   }) : super(key: key);
 
   @override
@@ -31,98 +31,57 @@ class _CustomMapWidgetState extends State<CustomMapWidget> {
         child: GestureDetector(
           onTapDown: (details) {
             final RenderBox renderBox = context.findRenderObject() as RenderBox;
-            final localPosition =
-                renderBox.globalToLocal(details.globalPosition);
+            final localPosition = renderBox.globalToLocal(details.globalPosition);
             final size = renderBox.size;
 
             // Convert to percentage coordinates (0.0 to 1.0)
-            final x = localPosition.dx / size.width;
-            final y = localPosition.dy / size.height;
+            final x = (localPosition.dx / size.width).clamp(0.0, 1.0);
+            final y = (localPosition.dy / size.height).clamp(0.0, 1.0);
 
             widget.onLocationSelected(x, y);
           },
           child: Stack(
             children: [
-              // Company map image
+              // Fallback map container with gradient background
               AspectRatio(
-                aspectRatio: 4 / 3, // Adjust this ratio to match your map image
-                child: Image.asset(
-                  widget.mapImagePath,
-                  width: double.infinity,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    print('Map image failed to load: $error');
-                    print('Attempted path: ${widget.mapImagePath}');
-                    return Container(
-                      width: double.infinity,
-                      height: 300,
-                      color: Colors.blue[50],
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.map,
-                            size: 64,
-                            color: Colors.blue[400],
+                aspectRatio: 4 / 3,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Colors.blue.shade100, Colors.green.shade100],
+                    ),
+                  ),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.map,
+                          size: 64,
+                          color: Colors.blue.shade600,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Company Map',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue,
                           ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Company Map',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.blue[600],
-                              fontWeight: FontWeight.bold,
-                            ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Tap to select location',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey,
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Tap to select location',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.blue[500],
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.blue[100],
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              'Map image not found at:\n${widget.mapImagePath}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.blue[700],
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Error: $error',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.red,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: () {
-                              // TODO: Add option to upload custom map
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                      'Please add your company map to assets/images/company_map.png'),
-                                ),
-                              );
-                            },
-                            child: const Text('Upload Map'),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
               // Markers overlay
