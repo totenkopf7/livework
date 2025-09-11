@@ -1,0 +1,62 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Sites collection - only admins can create/modify sites
+    match /sites/{siteId} {
+      allow read: if isAuthenticated() && hasAccessToSite(siteId);
+      allow write: if isAuthenticated() && isAdmin();
+    }
+    
+    // Reports collection - users can read/write reports for their sites
+    match /reports/{reportId} {
+      allow read: if isAuthenticated() && hasAccessToReportSite(reportId);
+      allow create: if isAuthenticated() && isValidReportData();
+      allow update: if isAuthenticated() && 
+        (isReporter() && resource.data.reporterId == request.auth.uid) ||
+        (isSupervisor() && hasAccessToReportSite(reportId)) ||
+        isAdmin();
+      allow delete: if isAuthenticated() && isAdmin();
+    }
+    
+    // Users collection - users can read their own data, admins can manage all
+    match /users/{userId} {
+      allow read: if isAuthenticated() && 
+        (request.auth.uid == userId || isAdmin());
+      allow write: if isAuthenticated() && 
+        (request.auth.uid == userId || isAdmin());
+    }
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return request.auth.token.role == 'admin';
+    }
+    
+    function isSupervisor() {
+      return request.auth.token.role in ['supervisor', 'admin'];
+    }
+    
+    function isReporter() {
+      return request.auth.token.role in ['reporter', 'supervisor', 'admin'];
+    }
+    
+    function hasAccessToSite(siteId) {
+      return siteId in request.auth.token.sites;
+    }
+    
+    function hasAccessToReportSite(reportId) {
+      return get(/databases/$(database)/documents/reports/$(reportId)).data.siteId in request.auth.token.sites;
+    }
+    
+    function isValidReportData() {
+      return request.resource.data.keys().hasAll(['siteId', 'zone', 'type', 'description', 'status', 'timestamp']) &&
+             request.resource.data.siteId in request.auth.token.sites &&
+             request.resource.data.reporterId == request.auth.uid;
+    }
+  }
+}
+

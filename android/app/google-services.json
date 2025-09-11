@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1032197181846",
+    "project_id": "livework-be38f",
+    "storage_bucket": "livework-be38f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1032197181846:android:8a43ebe34489e7e5ab0db7",
+        "android_client_info": {
+          "package_name": "com.example.livework"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCRM0p4XznAxkUIFjkYf_nFR6PyNk4KluE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

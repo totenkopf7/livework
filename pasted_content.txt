@@ -1,0 +1,169 @@
+✅ Revised App Development Prompt:
+"LiveWork View" – Real-Time Task, Hazard & Map-Driven Tracker for Refineries and Industrial Sites
+🧭 Project Summary:
+Build a fully cross-platform Flutter application (Android, iOS, and Web) for real-time reporting and monitoring of work activities and hazards within oil refineries and industrial facilities. The app includes a dynamic, uploadable map system so each refinery can use its own plant layout image as a visual base for tracking.
+
+🎯 Key Use Case:
+The firefighting/safety officer or inspector uses a mobile app to:
+
+Report work activities or hazards (with photos and zone labels)
+
+Submit to a live dashboard viewable by management
+
+Once a task is complete, they can tap “Mark Done”
+
+Boss sees the live status on a web dashboard
+
+Each refinery uploads its custom site map one time — the app uses that map for zone-based tagging and visualization
+
+✅ Core Modules & Features:
+1. 📱 Mobile App (Flutter – Android, iOS)
+Map Upload Module
+
+First-time setup: upload an image of the site map (JPG/PNG)
+
+App stores and uses this image as the base layout
+
+Optionally allow replacing map later
+
+Report Creation Form
+
+Select Zone (dropdown or tap on map if advanced)
+
+Select Type: Work or Hazard
+
+Enter short description
+
+Capture or upload photo
+
+Tap Submit → report goes to dashboard in real-time
+
+Report Management
+
+View list of current reports (by zone, type, date)
+
+Tap to Mark as Done
+
+Visual status color:
+🟡 In Progress, 🟢 Done, 🔴 Hazard
+
+Offline Support
+
+Store reports locally if no internet; auto-sync when online
+
+2. 🌐 Web Dashboard (Flutter Web or React + Python/Firebase backend)
+Map Viewer with Overlay (if advanced)
+
+Shows uploaded refinery map
+
+Overlay of submitted reports as markers or pins by zone
+
+Click on marker to see:
+
+Type (Work/Hazard)
+
+Photo
+
+Status
+
+Timestamp
+
+Description
+
+Reporter name (optional)
+
+Report Table View
+
+Filter by zone, type, date, status
+
+Sortable columns
+
+Color-coded status indicators
+
+Admin Options
+
+Approve or close reports
+
+Export daily or weekly summaries
+
+Optional PDF export or email summary
+
+3. ☁️ Backend & Data Management
+Feature	Recommended Tool
+Real-time database	Firebase Firestore (Free Tier works well)
+File & image storage	Firebase Storage
+Web hosting	Firebase Hosting (for dashboard) or GitHub Pages
+Optional backend	Python Flask if custom logic/PDFs required
+
+Each report contains:
+
+Zone
+
+Task type (Work/Hazard)
+
+Description
+
+Photo URL
+
+Status
+
+Timestamp
+
+Map ID (to support multiple sites)
+
+🔐 Authentication (Optional)
+Simple email/password login
+
+Roles:
+
+Reporter (mobile)
+
+Admin/Manager (web)
+
+Limit map uploads to admin role
+
+🧠 Optional Smart Features
+Tap on the map to place marker (Zone selection via coordinates)
+
+Risk scoring logic for hazard prioritization
+
+Push notifications (Firebase Cloud Messaging)
+
+GPS tagging
+
+Daily summary email to management
+
+🎨 Design Guidelines
+Professional, clean UI (industrial/minimalist)
+
+Color-coded zones & reports
+
+Responsive layout for all devices
+
+Easy-to-use photo input and filters
+
+⏱️ Estimated Timeline
+Task	Est. Duration
+UI/UX Design	2–3 days
+Mobile App Core (Flutter)	5–7 days
+Web Dashboard (Flutter Web or React)	4–6 days
+Firebase Backend Integration	2–3 days
+Testing & Documentation	2 days
+
+📦 Deliverables
+Flutter mobile and web app with complete source code
+
+Firebase project setup with Firestore + Storage
+
+Admin guide: how to upload map and manage data
+
+APK & Web version build for internal testing
+
+Documentation on how to deploy, modify zones, etc.
+
+🔄 Future-Ready Architecture
+Multiple refineries can use the app (each with its own uploaded map)
+
+Each report is linked to a Map ID, so companies can operate separately
+
+Scalable for future add-ons (alarms, fire drills, team chat, IoT)
