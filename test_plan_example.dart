@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
 import 'lib/data/models/report_model.dart';
 import 'lib/providers/report_provider.dart';
 

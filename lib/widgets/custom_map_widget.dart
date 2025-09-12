@@ -19,6 +19,9 @@ class CustomMapWidget extends StatefulWidget {
 }
 
 class _CustomMapWidgetState extends State<CustomMapWidget> {
+  bool _isImageLoading = true;
+  bool _imageError = false;
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -28,66 +31,138 @@ class _CustomMapWidgetState extends State<CustomMapWidget> {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
-        child: GestureDetector(
-          onTapDown: (details) {
-            final RenderBox renderBox = context.findRenderObject() as RenderBox;
-            final localPosition = renderBox.globalToLocal(details.globalPosition);
-            final size = renderBox.size;
+        child: Stack(
+          children: [
+            // Company map image
+            AspectRatio(
+              aspectRatio: 4 / 3,
+              child: _isImageLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : (_imageError
+                      ? _buildFallbackMap()
+                      : Image.asset(
+                          widget.mapImagePath,
+                          width: double.infinity,
+                          fit: BoxFit.contain,
+                        )),
+            ),
+            // Markers overlay
+            ...widget.markers.map((marker) => _buildMarker(marker)),
+            // Tap detector overlay
+            Positioned.fill(
+              child: GestureDetector(
+                onTapDown: (details) {
+                  final RenderBox renderBox =
+                      context.findRenderObject() as RenderBox;
+                  final localPosition =
+                      renderBox.globalToLocal(details.globalPosition);
+                  final size = renderBox.size;
 
-            // Convert to percentage coordinates (0.0 to 1.0)
-            final x = (localPosition.dx / size.width).clamp(0.0, 1.0);
-            final y = (localPosition.dy / size.height).clamp(0.0, 1.0);
+                  // Convert to percentage coordinates (0.0 to 1.0)
+                  final x = (localPosition.dx / size.width).clamp(0.0, 1.0);
+                  final y = (localPosition.dy / size.height).clamp(0.0, 1.0);
 
-            widget.onLocationSelected(x, y);
-          },
-          child: Stack(
-            children: [
-              // Fallback map container with gradient background
-              AspectRatio(
-                aspectRatio: 4 / 3,
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Colors.blue.shade100, Colors.green.shade100],
-                    ),
-                  ),
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.map,
-                          size: 64,
-                          color: Colors.blue.shade600,
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Company Map',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Tap to select location',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                  widget.onLocationSelected(x, y);
+                },
               ),
-              // Markers overlay
-              ...widget.markers.map((marker) => _buildMarker(marker)),
-            ],
-          ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Preload the image
+    _loadImage();
+  }
+
+  Future<void> _loadImage() async {
+    try {
+      // Use precacheImage to load the image and handle errors
+      await precacheImage(
+        AssetImage(widget.mapImagePath),
+        context,
+        onError: (exception, stackTrace) {
+          if (mounted) {
+            setState(() {
+              _isImageLoading = false;
+              _imageError = true;
+            });
+          }
+        },
+      );
+
+      if (mounted) {
+        setState(() {
+          _isImageLoading = false;
+          _imageError = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isImageLoading = false;
+          _imageError = true;
+        });
+      }
+    }
+  }
+
+  Widget _buildFallbackMap() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Colors.blue.shade100, Colors.green.shade100],
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.map,
+              size: 64,
+              color: Colors.blue.shade600,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Company Map',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Tap to select location',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Image not found at:',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            Text(
+              widget.mapImagePath,
+              style: const TextStyle(
+                fontSize: 10,
+                color: Colors.red,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );
@@ -120,7 +195,7 @@ class _CustomMapWidgetState extends State<CustomMapWidget> {
           ),
           child: Icon(
             marker.icon,
-            size: 12,
+            size: 8,
             color: Colors.white,
           ),
         ),

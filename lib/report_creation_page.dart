@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:convert';
-import 'dart:typed_data';
 import 'providers/report_provider.dart';
 import 'providers/site_provider.dart';
 import 'data/models/report_model.dart';

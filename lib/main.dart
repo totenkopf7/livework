@@ -7,7 +7,6 @@ import 'firebase_options.dart';
 import 'dashboard_page.dart';
 import 'report_creation_page.dart';
 import 'pages/map_page.dart';
-import 'pages/completed_reports_page.dart'; // ignore: unused_import
 import 'providers/report_provider.dart';
 import 'providers/site_provider.dart';
 import 'widgets/report_card_widget.dart';
@@ -31,7 +30,6 @@ class LiveWorkViewApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) {
             final reportProvider = ReportProvider();
-            // Initialize reports loading
             reportProvider.loadReports();
             return reportProvider;
           },
@@ -39,7 +37,6 @@ class LiveWorkViewApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) {
             final siteProvider = SiteProvider();
-            // Initialize with default site
             siteProvider.loadSites();
             return siteProvider;
           },
@@ -58,7 +55,9 @@ class LiveWorkViewApp extends StatelessWidget {
             backgroundColor: Color(0xFF2196F3),
             foregroundColor: Colors.white,
             elevation: 2,
+            iconTheme: IconThemeData(color: Colors.white),
           ),
+          iconTheme: const IconThemeData(color: Colors.black),
           cardTheme: CardTheme(
             elevation: 2,
             shape: RoundedRectangleBorder(
@@ -81,6 +80,14 @@ class LiveWorkViewApp extends StatelessWidget {
             ),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
+          bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+            backgroundColor: Colors.white,
+            selectedItemColor: Color(0xFF2196F3),
+            unselectedItemColor: Colors.grey,
+            type: BottomNavigationBarType.fixed,
+            showSelectedLabels: true,
+            showUnselectedLabels: true,
           ),
         ),
         home: const MainNavigationPage(),
@@ -108,29 +115,6 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
     const SettingsPage(),
   ];
 
-  final List<BottomNavigationBarItem> _navigationItems = [
-    const BottomNavigationBarItem(
-      icon: Icon(Icons.dashboard),
-      label: 'Dashboard',
-    ),
-    const BottomNavigationBarItem(
-      icon: Icon(Icons.map),
-      label: 'Map',
-    ),
-    const BottomNavigationBarItem(
-      icon: Icon(Icons.add_circle_outline),
-      label: 'New Report',
-    ),
-    const BottomNavigationBarItem(
-      icon: Icon(Icons.assignment_turned_in),
-      label: 'Reports',
-    ),
-    const BottomNavigationBarItem(
-      icon: Icon(Icons.settings),
-      label: 'Settings',
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -143,56 +127,75 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
           final completedCount = reportProvider.completedReports.length;
           
           return BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
+            currentIndex: _currentIndex,
+            onTap: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
             items: [
-              _navigationItems[0], // Dashboard
-              _navigationItems[1], // Map
-              _navigationItems[2], // New Report
-              BottomNavigationBarItem(
-                icon: Stack(
-                  children: [
-                    _navigationItems[3].icon,
-                    if (completedCount > 0)
-                      Positioned(
-                        right: 0,
-                        top: 0,
-                        child: Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          constraints: const BoxConstraints(
-                            minWidth: 16,
-                            minHeight: 16,
-                          ),
-                          child: Text(
-                            '$completedCount',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                label: _navigationItems[3].label,
+              const BottomNavigationBarItem(
+                icon: Icon(Icons.dashboard, size: 24),
+                label: 'Dashboard',
               ),
-              _navigationItems[4], // Settings
+              const BottomNavigationBarItem(
+                icon: Icon(Icons.map, size: 24),
+                label: 'Map',
+              ),
+              const BottomNavigationBarItem(
+                icon: Icon(Icons.add_circle_outline, size: 24),
+                label: 'New Report',
+              ),
+              BottomNavigationBarItem(
+                icon: completedCount > 0 ? _buildBadgeIcon(completedCount) : const Icon(Icons.assignment_turned_in, size: 24),
+                label: 'Reports',
+              ),
+              const BottomNavigationBarItem(
+                icon: Icon(Icons.settings, size: 24),
+                label: 'Settings',
+              ),
             ],
-        selectedItemColor: const Color(0xFF2196F3),
-        unselectedItemColor: Colors.grey,
-        type: BottomNavigationBarType.fixed,
+            selectedItemColor: const Color(0xFF2196F3),
+            unselectedItemColor: Colors.grey,
+            type: BottomNavigationBarType.fixed,
+            showSelectedLabels: true,
+            showUnselectedLabels: true,
           );
         },
       ),
+    );
+  }
+
+  Widget _buildBadgeIcon(int count) {
+    return Stack(
+      clipBehavior: Clip.none, // Allow the badge to overflow
+      children: [
+        const Icon(Icons.assignment_turned_in, size: 24),
+        Positioned(
+          right: -8,
+          top: -8,
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.red,
+              shape: BoxShape.circle,
+            ),
+            constraints: const BoxConstraints(
+              minWidth: 18,
+              minHeight: 18,
+            ),
+            child: Text(
+              count > 99 ? '99+' : count.toString(),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -254,7 +257,6 @@ class SettingsPage extends StatelessWidget {
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: () {
-                            // TODO: Implement site selection
                             _showSiteSelectionDialog(context);
                           },
                           child: const Text('Change Site'),
