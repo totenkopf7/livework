@@ -24,8 +24,8 @@ class SiteProvider with ChangeNotifier {
       _availableSites = [
         SiteModel(
           id: 'site_001',
-          name: 'Downtown Office Complex',
-          address: '123 Main St, Houston, TX',
+          name: 'Karband Co.',
+          address: 'IRQ-KRG-DHK-Kwashe',
           latitude: 29.7604,
           longitude: -95.3698,
           zones: [
@@ -34,13 +34,58 @@ class SiteProvider with ChangeNotifier {
             ZoneModel(id: 'Vacuum Unit', name: 'Vacuum Unit', color: 'blue'),
             ZoneModel(id: 'Tanks', name: 'Tanks', color: 'green'),
             ZoneModel(
-                id: 'Office Area', name: 'Office Area', color: 'office Area'),
+                id: 'Main Office', name: 'Main Office', color: 'office Area'),
+                            ZoneModel(
+                id: 'Employee Building 1', name: 'Employee Building 1', color: 'office Area'),
+                                            ZoneModel(
+                id: 'Employee Building 2', name: 'Employee Building 2', color: 'office Area'),
             ZoneModel(
                 id: 'Welding Workshop',
                 name: 'Welding Workshop',
                 color: 'orange'),
             ZoneModel(
                 id: 'Loading Area', name: 'Loading Area', color: 'yellow'),
+                  ZoneModel(
+                id: 'Pre Flash Tower',
+                name: 'Pre Flash Tower',
+                color: 'orange'),
+                 ZoneModel(
+                id: 'Adjacent Yard',
+                name: 'Adjacent Yard',
+                color: 'orange'),
+                 ZoneModel(
+                id: 'Refinery 2',
+                name: 'Refinery 2',
+                color: 'orange'),
+                 ZoneModel(
+                id: 'Site near Loading Area',
+                name: 'Site near Loading Area',
+                color: 'orange'),
+                 ZoneModel(
+                id: 'Site near Vacuum & Atmosphere',
+                name: 'Site near Vacuum & Atmosphere',
+                color: 'orange'),
+                 ZoneModel(
+                id: 'Water Unit',
+                name: 'Water Unit',
+                color: 'blue'),
+                 ZoneModel(
+                id: 'Outside Generators',
+                name: 'Outsite Generators',
+                color: 'red'),
+                 ZoneModel(
+                id: 'Gabban',
+                name: 'Gabban',
+                color: 'orange'),
+                 ZoneModel(
+                id: 'Boilers',
+                name: 'Boilers',
+                color: 'orange'),
+                 ZoneModel(
+                id: 'Steam Boilers',
+                name: 'Steam Boilers',
+                color: 'orange')
+                
           ],
         ),
         SiteModel(
