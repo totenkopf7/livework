@@ -181,11 +181,11 @@ class _MapPageState extends State<MapPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
+         const Padding(
+            padding: EdgeInsets.all(16),
             child: Text(
               'Work Reports (reports.length})',
-              style: const TextStyle(
+              style:  TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),

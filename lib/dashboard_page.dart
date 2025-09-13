@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:livework_view/widgets/colors.dart';
 import 'package:provider/provider.dart';
 import 'providers/report_provider.dart';
 import 'providers/site_provider.dart';
@@ -48,8 +49,8 @@ class _DashboardPageState extends State<DashboardPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('LiveWork View Dashboard'),
-        backgroundColor: const Color(0xFF2196F3),
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.background,
+        foregroundColor: AppColors.secondary,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),

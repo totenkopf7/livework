@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:livework_view/widgets/colors.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:convert';
+import 'dart:io';
+import 'package:image/image.dart' as img;
 import 'providers/report_provider.dart';
 import 'providers/site_provider.dart';
 import 'data/models/report_model.dart';
@@ -26,6 +29,7 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
   bool _isSubmitting = false;
   double? _mapX;
   double? _mapY;
+  List<String> _uploadErrors = [];
 
   @override
   void initState() {
@@ -45,13 +49,61 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
     }
   }
 
+  // Function to compress image further
+  Future<Uint8List> _compressImage(XFile imageFile, {int maxSizeKB = 200}) async {
+    try {
+      final bytes = await imageFile.readAsBytes();
+      
+      // If image is already small enough, return as is
+      if (bytes.lengthInBytes <= maxSizeKB * 1024) {
+        return bytes;
+      }
+      
+      // Decode image
+      final image = img.decodeImage(bytes);
+      if (image == null) return bytes;
+      
+      // Calculate scaling factor to achieve target size
+      int quality = 70;
+      Uint8List compressedBytes = bytes;
+      
+      // Gradually reduce quality until we reach target size
+      while (compressedBytes.lengthInBytes > maxSizeKB * 1024 && quality > 10) {
+        quality -= 10;
+        compressedBytes = Uint8List.fromList(img.encodeJpg(image, quality: quality));
+      }
+      
+      // If still too large, resize the image
+      if (compressedBytes.lengthInBytes > maxSizeKB * 1024) {
+        double scaleFactor = 0.9;
+        img.Image resizedImage = image;
+        
+        while (compressedBytes.lengthInBytes > maxSizeKB * 1024 && scaleFactor > 0.3) {
+          int newWidth = (resizedImage.width * scaleFactor).round();
+          int newHeight = (resizedImage.height * scaleFactor).round();
+          
+          resizedImage = img.copyResize(resizedImage, width: newWidth, height: newHeight);
+          compressedBytes = Uint8List.fromList(img.encodeJpg(resizedImage, quality: quality));
+          
+          scaleFactor -= 0.1;
+        }
+      }
+      
+      return compressedBytes;
+    } catch (e) {
+      print('Image compression error: $e');
+      // If compression fails, return original bytes
+      return await imageFile.readAsBytes();
+    }
+  }
+
   Future<void> _pickImage() async {
     try {
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.camera,
-        imageQuality: 50, // Further reduced quality to prevent Firebase size issues
-        maxWidth: 800, // Smaller image size
-        maxHeight: 800,
+        imageQuality: 50,
+        maxWidth: 1024,
+        maxHeight: 1024,
       );
 
       if (image != null) {
@@ -71,9 +123,9 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
     try {
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.gallery,
-        imageQuality: 50, // Further reduced quality to prevent Firebase size issues
-        maxWidth: 800, // Smaller image size
-        maxHeight: 800,
+        imageQuality: 50,
+        maxWidth: 1024,
+        maxHeight: 1024,
       );
 
       if (image != null) {
@@ -95,12 +147,12 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
       _mapY = y;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-            'Location selected: ${(x * 100).toStringAsFixed(1)}%, ${(y * 100).toStringAsFixed(1)}%'),
-      ),
-    );
+    // ScaffoldMessenger.of(context).showSnackBar(
+    //   SnackBar(
+    //     content: Text(
+    //         'Location selected: ${(x * 100).toStringAsFixed(1)}%, ${(y * 100).toStringAsFixed(1)}%'),
+    //   ),
+    // );
   }
 
   Future<void> _submitReport() async {
@@ -117,11 +169,11 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
 
     setState(() {
       _isSubmitting = true;
+      _uploadErrors.clear();
     });
 
     try {
-      final reportProvider =
-          Provider.of<ReportProvider>(context, listen: false);
+      final reportProvider = Provider.of<ReportProvider>(context, listen: false);
       final siteProvider = Provider.of<SiteProvider>(context, listen: false);
 
       if (siteProvider.currentSite == null) {
@@ -131,18 +183,51 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
         return;
       }
 
-      // Convert images to base64 for web compatibility
+      // Process images with compression
       List<String> photoUrls = [];
+      int imageIndex = 0;
+      
       for (XFile image in _selectedImages) {
-        if (kIsWeb) {
-          // For web, convert to base64
-          final bytes = await image.readAsBytes();
-          final base64String = base64Encode(bytes);
-          photoUrls.add('data:image/jpeg;base64,$base64String');
-        } else {
-          // For mobile, use file path
-          photoUrls.add(image.path);
+        try {
+          imageIndex++;
+          
+          // Show progress for current image
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Processing image $imageIndex/${_selectedImages.length}'),
+              duration: const Duration(seconds: 1),
+            ),
+          );
+          
+          if (kIsWeb) {
+            // For web, compress and convert to base64
+            final compressedBytes = await _compressImage(image, maxSizeKB: 200);
+            final base64String = base64Encode(compressedBytes);
+            photoUrls.add('data:image/jpeg;base64,$base64String');
+          } else {
+            // For mobile, save compressed image to temporary file
+            final compressedBytes = await _compressImage(image, maxSizeKB: 200);
+            
+            // Create a temporary file
+            final tempDir = Directory.systemTemp;
+            final tempFile = File('${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}_$imageIndex.jpg');
+            await tempFile.writeAsBytes(compressedBytes);
+            
+            photoUrls.add(tempFile.path);
+          }
+        } catch (e) {
+          print('Error processing image $imageIndex: $e');
+          _uploadErrors.add('Image $imageIndex: $e');
+          // Continue with other images even if one fails
         }
+      }
+
+      // Check if we have any successfully processed images
+      if (photoUrls.isEmpty && _selectedImages.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to process all images. Report not created.')),
+        );
+        return;
       }
 
       await reportProvider.createReport(
@@ -151,15 +236,47 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
         type: _selectedType,
         description: _descriptionController.text,
         photoUrls: photoUrls,
-        latitude: null, // No GPS data
-        longitude: null, // No GPS data
+        latitude: null,
+        longitude: null,
         mapX: _mapX,
         mapY: _mapY,
       );
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Report created successfully!')),
-      );
+      // Show success message with any warnings
+      if (_uploadErrors.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Report created successfully!')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Report created with ${_uploadErrors.length} image errors'),
+            action: SnackBarAction(
+              label: 'Details',
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text('Image Upload Errors'),
+                    content: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: _uploadErrors.map((error) => Text('• $error')).toList(),
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text('OK'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      }
 
       // Reset form
       _descriptionController.clear();
@@ -184,8 +301,8 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Create New Report'),
-        backgroundColor: const Color(0xFF2196F3),
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.background,
+        foregroundColor: AppColors.secondary,
       ),
       body: Consumer<SiteProvider>(
         builder: (context, siteProvider, child) {
@@ -349,6 +466,14 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                             ),
                           ),
                           const SizedBox(height: 12),
+                          Text(
+                            'Note: Images are automatically compressed to reduce upload size',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
                           Row(
                             children: [
                               Expanded(
@@ -380,17 +505,33 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                                     padding: const EdgeInsets.only(right: 8),
                                     child: Stack(
                                       children: [
-                                        ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          child: Container(
-                                            width: 100,
-                                            height: 100,
+                                        Container(
+                                          width: 100,
+                                          height: 100,
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(8),
                                             color: Colors.grey[300],
-                                            child: const Icon(
-                                              Icons.image,
-                                              color: Colors.grey,
-                                            ),
+                                          ),
+                                          child: FutureBuilder<Uint8List>(
+                                            future: _selectedImages[index].readAsBytes(),
+                                            builder: (context, snapshot) {
+                                              if (snapshot.hasData) {
+                                                return ClipRRect(
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  child: Image.memory(
+                                                    snapshot.data!,
+                                                    fit: BoxFit.cover,
+                                                    width: 100,
+                                                    height: 100,
+                                                  ),
+                                                );
+                                              } else {
+                                                return const Icon(
+                                                  Icons.image,
+                                                  color: Colors.grey,
+                                                );
+                                              }
+                                            },
                                           ),
                                         ),
                                         Positioned(

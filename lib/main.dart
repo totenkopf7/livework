@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-
+import 'widgets/colors.dart';
 // Import your existing files
 import 'dashboard_page.dart';
 import 'report_creation_page.dart';
@@ -52,8 +52,8 @@ class LiveWorkViewApp extends StatelessWidget {
             brightness: Brightness.light,
           ),
           appBarTheme: const AppBarTheme(
-            backgroundColor: Color(0xFF2196F3),
-            foregroundColor: Colors.white,
+        backgroundColor: AppColors.background,
+        foregroundColor: AppColors.secondary,
             elevation: 2,
             iconTheme: IconThemeData(color: Colors.white),
           ),
@@ -66,8 +66,8 @@ class LiveWorkViewApp extends StatelessWidget {
           ),
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2196F3),
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.background,
+              foregroundColor: AppColors.secondary,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -82,8 +82,8 @@ class LiveWorkViewApp extends StatelessWidget {
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
           bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-            backgroundColor: Colors.white,
-            selectedItemColor: Color(0xFF2196F3),
+        backgroundColor: AppColors.background,
+        selectedItemColor: AppColors.secondary,
             unselectedItemColor: Colors.grey,
             type: BottomNavigationBarType.fixed,
             showSelectedLabels: true,
@@ -208,8 +208,8 @@ class SettingsPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
-        backgroundColor: const Color(0xFF2196F3),
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.background,
+        foregroundColor: AppColors.secondary,
       ),
       body: Consumer<SiteProvider>(
         builder: (context, siteProvider, child) {
@@ -330,8 +330,8 @@ class CompletedReportsPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Completed Reports'),
-        backgroundColor: const Color(0xFF2196F3),
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.background,
+        foregroundColor: AppColors.secondary,
       ),
       body: Consumer<ReportProvider>(
         builder: (context, reportProvider, child) {
