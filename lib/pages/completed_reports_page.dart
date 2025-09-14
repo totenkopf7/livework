@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:livework_view/widgets/colors.dart';
 import 'package:provider/provider.dart';
 import '../providers/report_provider.dart';
 import '../providers/site_provider.dart';
@@ -30,8 +31,8 @@ class _CompletedReportsPageState extends State<CompletedReportsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Completed Reports'),
-        backgroundColor: const Color(0xFF2196F3),
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.background,
+        foregroundColor: AppColors.secondary,
         actions: [
           if (kIsWeb) // Only show delete all button on web
             Consumer<ReportProvider>(

@@ -379,7 +379,7 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Zone',
+                            'Task zone',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -467,7 +467,7 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'Note: Images are automatically compressed to reduce upload size',
+                            'Upload photos',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[600],

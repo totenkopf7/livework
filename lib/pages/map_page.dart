@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:livework_view/widgets/colors.dart';
 import 'package:provider/provider.dart';
 import '../providers/report_provider.dart';
 import '../providers/site_provider.dart';
@@ -29,8 +30,8 @@ class _MapPageState extends State<MapPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Work Reports Map'),
-        backgroundColor: const Color(0xFF2196F3),
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.background,
+        foregroundColor: AppColors.secondary,
       ),
       body: Consumer2<ReportProvider, SiteProvider>(
         builder: (context, reportProvider, siteProvider, child) {
@@ -181,11 +182,11 @@ class _MapPageState extends State<MapPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-         const Padding(
+          Padding(
             padding: EdgeInsets.all(16),
             child: Text(
-              'Work Reports (reports.length})',
-              style:  TextStyle(
+              'Work Reports (${reports.length})',
+              style:  const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),

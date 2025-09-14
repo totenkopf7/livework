@@ -23,6 +23,32 @@ class _CustomMapWidgetState extends State<CustomMapWidget> {
   bool _imageError = false;
 
   @override
+  void initState() {
+    super.initState();
+    _loadImage();
+  }
+
+  Future<void> _loadImage() async {
+    try {
+      await precacheImage(AssetImage(widget.mapImagePath), context);
+      if (mounted) {
+        setState(() {
+          _isImageLoading = false;
+          _imageError = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("❌ Failed to load map image: $e");
+      if (mounted) {
+        setState(() {
+          _isImageLoading = false;
+          _imageError = true;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
@@ -33,22 +59,20 @@ class _CustomMapWidgetState extends State<CustomMapWidget> {
         borderRadius: BorderRadius.circular(8),
         child: Stack(
           children: [
-            // Company map image
             AspectRatio(
               aspectRatio: 4 / 3,
               child: _isImageLoading
                   ? const Center(child: CircularProgressIndicator())
-                  : (_imageError
-                      ? _buildFallbackMap()
-                      : Image.asset(
-                          widget.mapImagePath,
-                          width: double.infinity,
-                          fit: BoxFit.contain,
-                        )),
+                  : Image.asset(
+                      widget.mapImagePath,
+                      width: double.infinity,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return _buildFallbackMap();
+                      },
+                    ),
             ),
-            // Markers overlay
             ...widget.markers.map((marker) => _buildMarker(marker)),
-            // Tap detector overlay
             Positioned.fill(
               child: GestureDetector(
                 onTapDown: (details) {
@@ -58,7 +82,6 @@ class _CustomMapWidgetState extends State<CustomMapWidget> {
                       renderBox.globalToLocal(details.globalPosition);
                   final size = renderBox.size;
 
-                  // Convert to percentage coordinates (0.0 to 1.0)
                   final x = (localPosition.dx / size.width).clamp(0.0, 1.0);
                   final y = (localPosition.dy / size.height).clamp(0.0, 1.0);
 
@@ -70,45 +93,6 @@ class _CustomMapWidgetState extends State<CustomMapWidget> {
         ),
       ),
     );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    // Preload the image
-    _loadImage();
-  }
-
-  Future<void> _loadImage() async {
-    try {
-      // Use precacheImage to load the image and handle errors
-      await precacheImage(
-        AssetImage(widget.mapImagePath),
-        context,
-        onError: (exception, stackTrace) {
-          if (mounted) {
-            setState(() {
-              _isImageLoading = false;
-              _imageError = true;
-            });
-          }
-        },
-      );
-
-      if (mounted) {
-        setState(() {
-          _isImageLoading = false;
-          _imageError = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isImageLoading = false;
-          _imageError = true;
-        });
-      }
-    }
   }
 
   Widget _buildFallbackMap() {
@@ -179,8 +163,8 @@ class _CustomMapWidgetState extends State<CustomMapWidget> {
           }
         },
         child: Container(
-          width: 24,
-          height: 24,
+          width: 12,
+          height: 12,
           decoration: BoxDecoration(
             color: marker.color,
             shape: BoxShape.circle,

@@ -90,8 +90,97 @@ class LiveWorkViewApp extends StatelessWidget {
             showUnselectedLabels: true,
           ),
         ),
-        home: const MainNavigationPage(),
+        home: const SplashScreen(), // Changed to SplashScreen
         debugShowCheckedModeBanner: false,
+      ),
+    );
+  }
+}
+
+// New SplashScreen widget with bouncing logo animation
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({Key? key}) : super(key: key);
+
+  @override
+  _SplashScreenState createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _bounceAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    // Initialize animation controller
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
+    
+    // Create bounce animation
+    _bounceAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.fastEaseInToSlowEaseOut,
+      ),
+    );
+    
+    // Start animation
+    _controller.forward();
+    
+    // Navigate to main app after splash duration
+    Future.delayed(const Duration(seconds: 4), () {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const MainNavigationPage()),
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: Center(
+         child: Column(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      // 🔹 Animated logo
+      ScaleTransition(
+        scale: _bounceAnimation,
+        child: Image.asset(
+          'assets/images/logo.png',
+          width: 120,
+          height: 120,
+          color: AppColors.secondary,
+        ),
+      ),
+
+      const SizedBox(height: 40),
+
+      // 🔹 Spinning progress bar
+      const CircularProgressIndicator(
+        valueColor: AlwaysStoppedAnimation<Color>(AppColors.secondary),
+        strokeWidth: 0.5
+      ),
+
+      const SizedBox(height: 20),
+
+      // Optional loading text
+      const Text(
+        "Loading...",
+        style: TextStyle(color: AppColors.secondary, fontSize: 10),
+      ),
+    ],
+  ),
       ),
     );
   }
@@ -155,7 +244,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
                 label: 'Settings',
               ),
             ],
-            selectedItemColor: const Color(0xFF2196F3),
+            selectedItemColor: AppColors.secondary,
             unselectedItemColor: Colors.grey,
             type: BottomNavigationBarType.fixed,
             showSelectedLabels: true,

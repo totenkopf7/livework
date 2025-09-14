@@ -87,9 +87,14 @@ class _DashboardPageState extends State<DashboardPage> {
             );
           }
 
-          if (reportProvider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+         if (reportProvider.isLoading) {
+  return const Center(
+    child: CircularProgressIndicator(
+      valueColor: AlwaysStoppedAnimation<Color>(AppColors.background), // change color here
+      strokeWidth: 3, // optional: thickness of the progress circle
+    ),
+  );
+}
 
           if (reportProvider.error != null) {
             return Center(

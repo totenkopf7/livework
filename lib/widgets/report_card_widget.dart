@@ -2,7 +2,13 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:livework_view/widgets/colors.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../data/models/report_model.dart';
+// For web download
+// ignore: avoid_web_libraries_in_flutter
+import 'dart:html' as html;
 
 class ReportCardWidget extends StatelessWidget {
   final ReportModel report;
@@ -27,6 +33,7 @@ class ReportCardWidget extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Top row with icon and info
             Row(
               children: [
                 Icon(
@@ -74,9 +81,10 @@ class ReportCardWidget extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               report.description,
-              style: const TextStyle(fontSize: 14),
+              style: const TextStyle(fontSize: 22),
             ),
             const SizedBox(height: 12),
+            // Timestamp and reporter
             Row(
               children: [
                 Icon(
@@ -110,6 +118,7 @@ class ReportCardWidget extends StatelessWidget {
                 ],
               ],
             ),
+            // Images
             if (report.photoUrls.isNotEmpty) ...[
               const SizedBox(height: 12),
               SizedBox(
@@ -123,11 +132,12 @@ class ReportCardWidget extends StatelessWidget {
                       padding: const EdgeInsets.only(right: 8),
                       child: GestureDetector(
                         onTap: () => _showFullImage(context, imagePath),
+                        onLongPress: () => _saveImage(context, imagePath),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: Container(
-                            width: 80,
-                            height: 80,
+                            width: 100,
+                            height: 100,
                             child: kIsWeb
                                 ? _buildWebImage(imagePath)
                                 : _buildMobileImage(imagePath),
@@ -139,18 +149,20 @@ class ReportCardWidget extends StatelessWidget {
                 ),
               ),
             ],
+            // Status button
             if (report.status == ReportStatus.inProgress) ...[
               const SizedBox(height: 12),
               ElevatedButton.icon(
                 onPressed: () => onStatusChanged(ReportStatus.done),
                 icon: const Icon(Icons.check),
-                label: const Text('Task completed'),
+                label: const Text('Tap if completed'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
+                  backgroundColor:AppColors.background,
+                  foregroundColor: AppColors.secondary,
                 ),
               ),
             ],
+            // Delete button
             if (showDeleteButton && onDelete != null) ...[
               const SizedBox(height: 12),
               Container(
@@ -173,6 +185,7 @@ class ReportCardWidget extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 12),
+            // Status dropdown
             Row(
               children: [
                 Expanded(
@@ -209,41 +222,112 @@ class ReportCardWidget extends StatelessWidget {
     );
   }
 
-  IconData _getReportIcon(ReportType type) {
-    switch (type) {
-      case ReportType.work:
-        return Icons.build;
-      case ReportType.hazard:
-        return Icons.warning;
+  // ----- IMAGE BUILDERS -----
+  Widget _buildWebImage(String imagePath) {
+    if (imagePath.startsWith('data:image')) {
+      return Image.memory(
+        base64Decode(imagePath.split(',')[1]),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => _placeholderImage(),
+      );
+    } else {
+      return _placeholderImage();
     }
   }
 
-  Color _getStatusColor(ReportStatus status) {
-    switch (status) {
-      case ReportStatus.inProgress:
-        return Colors.orange;
-      case ReportStatus.done:
-        return Colors.green;
-      case ReportStatus.hazard:
-        return Colors.red;
+  Widget _buildMobileImage(String imagePath) {
+    return Image.file(
+      File(imagePath),
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => _placeholderImage(),
+    );
+  }
+
+  Widget _placeholderImage() {
+    return Container(
+      width: 80,
+      height: 80,
+      color: Colors.grey[300],
+      child: const Icon(
+        Icons.image,
+        color: Colors.grey,
+      ),
+    );
+  }
+
+  // ----- FULL IMAGE VIEW -----
+  void _showFullImage(BuildContext context, String imagePath) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppBar(
+              title: const Text('Image'),
+              backgroundColor: const Color(0xFF2196F3),
+              foregroundColor: Colors.white,
+              leading: IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ),
+            Flexible(
+              child: Container(
+                constraints: const BoxConstraints(
+                  maxWidth: 400,
+                  maxHeight: 400,
+                ),
+                child: kIsWeb
+                    ? _buildWebImage(imagePath)
+                    : _buildMobileImage(imagePath),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ----- SAVE IMAGE -----
+  void _saveImage(BuildContext context, String imagePath) async {
+    try {
+      if (kIsWeb) {
+        final bytes = base64Decode(imagePath.split(',')[1]);
+        final blob = html.Blob([bytes]);
+        final url = html.Url.createObjectUrlFromBlob(blob);
+        final anchor = html.AnchorElement(href: url)
+          ..setAttribute("download", "report_image.png")
+          ..click();
+        html.Url.revokeObjectUrl(url);
+      } else {
+        final status = await Permission.storage.request();
+        if (!status.isGranted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Permission denied')),
+          );
+          return;
+        }
+
+        final bytes = await File(imagePath).readAsBytes();
+        await ImageGallerySaver.saveImage(
+          bytes,
+          quality: 100,
+          name: "report_${DateTime.now().millisecondsSinceEpoch}",
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Image saved to gallery!')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to save image: $e')),
+      );
     }
   }
 
-  String _getStatusText(ReportStatus status) {
-    switch (status) {
-      case ReportStatus.inProgress:
-        return 'In Progress';
-      case ReportStatus.done:
-        return 'Completed';
-      case ReportStatus.hazard:
-        return 'Hazard';
-    }
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
-  }
-
+  // ----- LOCATION INFO -----
   void _showLocationInfo(BuildContext context) {
     if (report.latitude != null && report.longitude != null) {
       showDialog(
@@ -282,100 +366,39 @@ class ReportCardWidget extends StatelessWidget {
     }
   }
 
-  Widget _buildWebImage(String imagePath) {
-    // For web, handle base64 images
-    if (imagePath.startsWith('data:image')) {
-      return Image.memory(
-        base64Decode(imagePath.split(',')[1]),
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return Container(
-            width: 80,
-            height: 80,
-            color: Colors.grey[300],
-            child: const Icon(
-              Icons.image,
-              color: Colors.grey,
-            ),
-          );
-        },
-      );
-    } else {
-      // Fallback for non-base64 paths
-      return Container(
-        width: 80,
-        height: 80,
-        color: Colors.grey[300],
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.image,
-              color: Colors.grey,
-              size: 24,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Image',
-              style: TextStyle(
-                fontSize: 10,
-                color: Colors.grey[600],
-              ),
-            ),
-          ],
-        ),
-      );
+  // ----- HELPER METHODS -----
+  IconData _getReportIcon(ReportType type) {
+    switch (type) {
+      case ReportType.work:
+        return Icons.build;
+      case ReportType.hazard:
+        return Icons.warning;
     }
   }
 
-  Widget _buildMobileImage(String imagePath) {
-    return Image.file(
-      File(imagePath),
-      fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) {
-        return Container(
-          width: 80,
-          height: 80,
-          color: Colors.grey[300],
-          child: const Icon(
-            Icons.image,
-            color: Colors.grey,
-          ),
-        );
-      },
-    );
+  Color _getStatusColor(ReportStatus status) {
+    switch (status) {
+      case ReportStatus.inProgress:
+        return Colors.orange;
+      case ReportStatus.done:
+        return Colors.green;
+      case ReportStatus.hazard:
+        return Colors.red;
+    }
   }
 
-  void _showFullImage(BuildContext context, String imagePath) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppBar(
-              title: const Text('Image'),
-              backgroundColor: const Color(0xFF2196F3),
-              foregroundColor: Colors.white,
-              leading: IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ),
-            Flexible(
-              child: Container(
-                constraints: const BoxConstraints(
-                  maxWidth: 400,
-                  maxHeight: 400,
-                ),
-                child: kIsWeb
-                    ? _buildWebImage(imagePath)
-                    : _buildMobileImage(imagePath),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  String _getStatusText(ReportStatus status) {
+    switch (status) {
+      case ReportStatus.inProgress:
+        return 'In Progress';
+      case ReportStatus.done:
+        return 'Completed';
+      case ReportStatus.hazard:
+        return 'Hazard';
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
   }
 }
