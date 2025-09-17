@@ -8,6 +8,7 @@ import 'dart:io';
 import 'package:image/image.dart' as img;
 import 'providers/report_provider.dart';
 import 'providers/site_provider.dart';
+import 'providers/auth_provider.dart' as livework_auth; // Add alias
 import 'data/models/report_model.dart';
 import 'widgets/custom_map_widget.dart';
 
@@ -49,31 +50,25 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
     }
   }
 
-  // Function to compress image further
   Future<Uint8List> _compressImage(XFile imageFile, {int maxSizeKB = 200}) async {
     try {
       final bytes = await imageFile.readAsBytes();
       
-      // If image is already small enough, return as is
       if (bytes.lengthInBytes <= maxSizeKB * 1024) {
         return bytes;
       }
       
-      // Decode image
       final image = img.decodeImage(bytes);
       if (image == null) return bytes;
       
-      // Calculate scaling factor to achieve target size
       int quality = 70;
       Uint8List compressedBytes = bytes;
       
-      // Gradually reduce quality until we reach target size
       while (compressedBytes.lengthInBytes > maxSizeKB * 1024 && quality > 10) {
         quality -= 10;
         compressedBytes = Uint8List.fromList(img.encodeJpg(image, quality: quality));
       }
       
-      // If still too large, resize the image
       if (compressedBytes.lengthInBytes > maxSizeKB * 1024) {
         double scaleFactor = 0.9;
         img.Image resizedImage = image;
@@ -92,7 +87,6 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
       return compressedBytes;
     } catch (e) {
       print('Image compression error: $e');
-      // If compression fails, return original bytes
       return await imageFile.readAsBytes();
     }
   }
@@ -146,13 +140,6 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
       _mapX = x;
       _mapY = y;
     });
-
-    // ScaffoldMessenger.of(context).showSnackBar(
-    //   SnackBar(
-    //     content: Text(
-    //         'Location selected: ${(x * 100).toStringAsFixed(1)}%, ${(y * 100).toStringAsFixed(1)}%'),
-    //   ),
-    // );
   }
 
   Future<void> _submitReport() async {
@@ -183,7 +170,6 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
         return;
       }
 
-      // Process images with compression
       List<String> photoUrls = [];
       int imageIndex = 0;
       
@@ -191,7 +177,6 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
         try {
           imageIndex++;
           
-          // Show progress for current image
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Processing image $imageIndex/${_selectedImages.length}'),
@@ -200,15 +185,12 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
           );
           
           if (kIsWeb) {
-            // For web, compress and convert to base64
             final compressedBytes = await _compressImage(image, maxSizeKB: 200);
             final base64String = base64Encode(compressedBytes);
             photoUrls.add('data:image/jpeg;base64,$base64String');
           } else {
-            // For mobile, save compressed image to temporary file
             final compressedBytes = await _compressImage(image, maxSizeKB: 200);
             
-            // Create a temporary file
             final tempDir = Directory.systemTemp;
             final tempFile = File('${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}_$imageIndex.jpg');
             await tempFile.writeAsBytes(compressedBytes);
@@ -218,11 +200,9 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
         } catch (e) {
           print('Error processing image $imageIndex: $e');
           _uploadErrors.add('Image $imageIndex: $e');
-          // Continue with other images even if one fails
         }
       }
 
-      // Check if we have any successfully processed images
       if (photoUrls.isEmpty && _selectedImages.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to process all images. Report not created.')),
@@ -242,7 +222,6 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
         mapY: _mapY,
       );
 
-      // Show success message with any warnings
       if (_uploadErrors.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Report created successfully!')),
@@ -257,7 +236,7 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                 showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: Text('Image Upload Errors'),
+                    title: const Text('Image Upload Errors'),
                     content: SingleChildScrollView(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -267,7 +246,7 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: Text('OK'),
+                        child: const Text('OK'),
                       ),
                     ],
                   ),
@@ -278,7 +257,6 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
         );
       }
 
-      // Reset form
       _descriptionController.clear();
       setState(() {
         _selectedImages.clear();
@@ -298,6 +276,24 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<livework_auth.LiveWorkAuthProvider>(context); // Use alias
+    
+    if (!authProvider.isAdmin) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Create New Report'),
+          backgroundColor: AppColors.background,
+          foregroundColor: AppColors.secondary,
+        ),
+        body: const Center(
+          child: Text(
+            'You do not have permission to create reports.',
+            style: TextStyle(fontSize: 16, color: Colors.red),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Create New Report'),
@@ -322,7 +318,6 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Report Type Selection
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
@@ -370,8 +365,6 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // Zone Selection
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
@@ -415,8 +408,6 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // Description
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
@@ -450,8 +441,6 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // Photos
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
@@ -569,8 +558,6 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // Custom Map Selection
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
@@ -647,8 +634,6 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // Submit Button
                   ElevatedButton(
                     onPressed: _isSubmitting ? null : _submitReport,
                     style: ElevatedButton.styleFrom(

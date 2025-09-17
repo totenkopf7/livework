@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:livework_view/pages/login_page.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'widgets/colors.dart';
-// Import your existing files
 import 'dashboard_page.dart';
 import 'report_creation_page.dart';
 import 'pages/map_page.dart';
 import 'providers/report_provider.dart';
 import 'providers/site_provider.dart';
-import 'widgets/report_card_widget.dart';
-import 'data/models/report_model.dart';
+import 'providers/auth_provider.dart' as livework_auth;
+import 'pages/settings_page.dart';
+import 'pages/completed_reports_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,18 +29,22 @@ class LiveWorkViewApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(
-          create: (_) {
-            final reportProvider = ReportProvider();
-            reportProvider.loadReports();
-            return reportProvider;
-          },
-        ),
+        ChangeNotifierProvider(create: (_) => livework_auth.LiveWorkAuthProvider()),
         ChangeNotifierProvider(
           create: (_) {
             final siteProvider = SiteProvider();
             siteProvider.loadSites();
             return siteProvider;
+          },
+        ),
+        ChangeNotifierProxyProvider<livework_auth.LiveWorkAuthProvider, ReportProvider>(
+          create: (context) => ReportProvider(),
+          update: (context, authProvider, reportProvider) {
+            if (reportProvider == null) {
+              reportProvider = ReportProvider();
+            }
+            reportProvider.setCurrentUser(authProvider.user);
+            return reportProvider;
           },
         ),
       ],
@@ -52,8 +58,8 @@ class LiveWorkViewApp extends StatelessWidget {
             brightness: Brightness.light,
           ),
           appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.background,
-        foregroundColor: AppColors.secondary,
+            backgroundColor: AppColors.background,
+            foregroundColor: AppColors.secondary,
             elevation: 2,
             iconTheme: IconThemeData(color: Colors.white),
           ),
@@ -82,22 +88,45 @@ class LiveWorkViewApp extends StatelessWidget {
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
           bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: AppColors.background,
-        selectedItemColor: AppColors.secondary,
+            backgroundColor: AppColors.background,
+            selectedItemColor: AppColors.secondary,
             unselectedItemColor: Colors.grey,
             type: BottomNavigationBarType.fixed,
             showSelectedLabels: true,
             showUnselectedLabels: true,
           ),
         ),
-        home: const SplashScreen(), // Changed to SplashScreen
+        home: const AuthWrapper(),
         debugShowCheckedModeBanner: false,
       ),
     );
   }
 }
 
-// New SplashScreen widget with bouncing logo animation
+class AuthWrapper extends StatefulWidget {
+  const AuthWrapper({Key? key}) : super(key: key);
+
+  @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
+  @override
+  Widget build(BuildContext context) {
+    final authProvider = Provider.of<livework_auth.LiveWorkAuthProvider>(context);
+    
+    if (authProvider.isLoading) {
+      return const SplashScreen();
+    }
+    
+    if (authProvider.user == null) {
+      return const LoginPage();
+    }
+    
+    return const MainNavigationPage();
+  }
+}
+
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
 
@@ -114,13 +143,11 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
     
-    // Initialize animation controller
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     );
     
-    // Create bounce animation
     _bounceAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(
         parent: _controller,
@@ -128,10 +155,8 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
     
-    // Start animation
     _controller.forward();
     
-    // Navigate to main app after splash duration
     Future.delayed(const Duration(seconds: 4), () {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const MainNavigationPage()),
@@ -150,37 +175,30 @@ class _SplashScreenState extends State<SplashScreen>
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Center(
-         child: Column(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      // 🔹 Animated logo
-      ScaleTransition(
-        scale: _bounceAnimation,
-        child: Image.asset(
-          'assets/images/logo.png',
-          width: 120,
-          height: 120,
-          color: AppColors.secondary,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ScaleTransition(
+              scale: _bounceAnimation,
+              child: Image.asset(
+                'assets/images/logo.png',
+                width: 120,
+                height: 120,
+                color: AppColors.secondary,
+              ),
+            ),
+            const SizedBox(height: 40),
+            const CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.secondary),
+              strokeWidth: 0.5
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              "Loading...",
+              style: TextStyle(color: AppColors.secondary, fontSize: 10),
+            ),
+          ],
         ),
-      ),
-
-      const SizedBox(height: 40),
-
-      // 🔹 Spinning progress bar
-      const CircularProgressIndicator(
-        valueColor: AlwaysStoppedAnimation<Color>(AppColors.secondary),
-        strokeWidth: 0.5
-      ),
-
-      const SizedBox(height: 20),
-
-      // Optional loading text
-      const Text(
-        "Loading...",
-        style: TextStyle(color: AppColors.secondary, fontSize: 10),
-      ),
-    ],
-  ),
       ),
     );
   }
@@ -196,24 +214,83 @@ class MainNavigationPage extends StatefulWidget {
 class _MainNavigationPageState extends State<MainNavigationPage> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = [
-    const DashboardPage(),
-    const MapPage(),
-    const ReportCreationPage(),
-    const CompletedReportsPage(),
-    const SettingsPage(),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<livework_auth.LiveWorkAuthProvider>(context);
+    
+    // Create pages list conditionally based on user role
+    List<Widget> pages = [
+      const DashboardPage(),
+      const MapPage(),
+    ];
+    
+    // Only show "New Report" page for admin users
+    if (authProvider.isAdmin) {
+      pages.add(const ReportCreationPage());
+    } else {
+      // For non-admin users, add a placeholder or redirect to another page
+      pages.add(const Center(child: Text('No permission to create reports')));
+    }
+    
+    // Add the remaining pages
+    pages.addAll([
+      const CompletedReportsPage(),
+      const SettingsPage(),
+    ]);
+    
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
-        children: _pages,
+        children: pages,
       ),
-      bottomNavigationBar: Consumer<ReportProvider>(
-        builder: (context, reportProvider, child) {
+      bottomNavigationBar: Builder(
+        builder: (context) {
+          final authProvider = Provider.of<livework_auth.LiveWorkAuthProvider>(context, listen: true);
+          final reportProvider = Provider.of<ReportProvider>(context, listen: true);
+          
           final completedCount = reportProvider.completedReports.length;
+          
+          // Create items list conditionally based on user role
+          List<BottomNavigationBarItem> items = [
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.dashboard, size: 24),
+              label: 'Dashboard',
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.map, size: 24),
+              label: 'Map',
+            ),
+          ];
+          
+          // Only show "New Report" tab for admin users
+          if (authProvider.isAdmin) {
+            items.add(
+              const BottomNavigationBarItem(
+                icon: Icon(Icons.add_circle_outline, size: 24),
+                label: 'New Report',
+              ),
+            );
+          } else {
+            // For non-admin users, add a disabled tab
+            items.add(
+              const BottomNavigationBarItem(
+                icon: Icon(Icons.block, size: 24),
+                label: 'No Access',
+              ),
+            );
+          }
+          
+          // Add the remaining tabs
+          items.addAll([
+            BottomNavigationBarItem(
+              icon: completedCount > 0 ? _buildBadgeIcon(completedCount) : const Icon(Icons.assignment_turned_in, size: 24),
+              label: 'Reports',
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.settings, size: 24),
+              label: 'Settings',
+            ),
+          ]);
           
           return BottomNavigationBar(
             currentIndex: _currentIndex,
@@ -222,28 +299,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
                 _currentIndex = index;
               });
             },
-            items: [
-              const BottomNavigationBarItem(
-                icon: Icon(Icons.dashboard, size: 24),
-                label: 'Dashboard',
-              ),
-              const BottomNavigationBarItem(
-                icon: Icon(Icons.map, size: 24),
-                label: 'Map',
-              ),
-              const BottomNavigationBarItem(
-                icon: Icon(Icons.add_circle_outline, size: 24),
-                label: 'New Report',
-              ),
-              BottomNavigationBarItem(
-                icon: completedCount > 0 ? _buildBadgeIcon(completedCount) : const Icon(Icons.assignment_turned_in, size: 24),
-                label: 'Reports',
-              ),
-              const BottomNavigationBarItem(
-                icon: Icon(Icons.settings, size: 24),
-                label: 'Settings',
-              ),
-            ],
+            items: items,
             selectedItemColor: AppColors.secondary,
             unselectedItemColor: Colors.grey,
             type: BottomNavigationBarType.fixed,
@@ -257,7 +313,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
 
   Widget _buildBadgeIcon(int count) {
     return Stack(
-      clipBehavior: Clip.none, // Allow the badge to overflow
+      clipBehavior: Clip.none,
       children: [
         const Icon(Icons.assignment_turned_in, size: 24),
         Positioned(
@@ -265,7 +321,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
           top: -8,
           child: Container(
             padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: Colors.red,
               shape: BoxShape.circle,
             ),
@@ -285,170 +341,6 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
           ),
         ),
       ],
-    );
-  }
-}
-
-class SettingsPage extends StatelessWidget {
-  const SettingsPage({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings'),
-        backgroundColor: AppColors.background,
-        foregroundColor: AppColors.secondary,
-      ),
-      body: Consumer<SiteProvider>(
-        builder: (context, siteProvider, child) {
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Site Configuration',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        if (siteProvider.currentSite != null) ...[
-                          Text(
-                            'Current Site: ${siteProvider.currentSite!.name}',
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Site ID: ${siteProvider.currentSite!.id}',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ] else ...[
-                          const Text(
-                            'No site configured',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () {
-                            _showSiteSelectionDialog(context);
-                          },
-                          child: const Text('Change Site'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'App Information',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'LiveWork View v1.0.0',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Real-time task and hazard tracking system',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  void _showSiteSelectionDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Select Site'),
-        content: const Text(
-            'Site selection functionality will be implemented here.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class CompletedReportsPage extends StatelessWidget {
-  const CompletedReportsPage({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Completed Reports'),
-        backgroundColor: AppColors.background,
-        foregroundColor: AppColors.secondary,
-      ),
-      body: Consumer<ReportProvider>(
-        builder: (context, reportProvider, child) {
-          final completedReports = reportProvider.reports
-              .where((r) => r.status == ReportStatus.done)
-              .toList();
-          if (completedReports.isEmpty) {
-            return const Center(child: Text('No completed reports.'));
-          }
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: completedReports.length,
-            itemBuilder: (context, index) {
-              final report = completedReports[index];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: ReportCardWidget(
-                  report: report,
-                  onStatusChanged: (newStatus) {
-                    Provider.of<ReportProvider>(context, listen: false)
-                        .updateReportStatus(report.id, newStatus);
-                  },
-                ),
-              );
-            },
-          );
-        },
-      ),
     );
   }
 }

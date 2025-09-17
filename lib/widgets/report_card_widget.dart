@@ -5,7 +5,9 @@ import 'package:flutter/foundation.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:livework_view/widgets/colors.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
 import '../data/models/report_model.dart';
+import 'package:livework_view/providers/auth_provider.dart' as livework_auth;
 // For web download
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html;
@@ -26,6 +28,10 @@ class ReportCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    final authProvider = Provider.of<livework_auth.LiveWorkAuthProvider>(context);
+    final isAdmin = authProvider.isAdmin;
+    
     return Card(
       elevation: 2,
       child: Padding(
@@ -79,7 +85,7 @@ class ReportCardWidget extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            Text(
+            SelectableText(
               report.description,
               style: const TextStyle(fontSize: 22),
             ),
@@ -103,7 +109,7 @@ class ReportCardWidget extends StatelessWidget {
                 const Spacer(),
                 if (report.reporterName != null) ...[
                   Icon(
-                    Icons.person,
+                    Icons.engineering,
                     size: 16,
                     color: Colors.grey[600],
                   ),
@@ -150,7 +156,7 @@ class ReportCardWidget extends StatelessWidget {
               ),
             ],
             // Status button
-            if (report.status == ReportStatus.inProgress) ...[
+            if (report.status == ReportStatus.inProgress && isAdmin) ...[
               const SizedBox(height: 12),
               ElevatedButton.icon(
                 onPressed: () => onStatusChanged(ReportStatus.done),
@@ -184,6 +190,8 @@ class ReportCardWidget extends StatelessWidget {
                 ),
               ),
             ],
+            
+            if (isAdmin)...[
             const SizedBox(height: 12),
             // Status dropdown
             Row(
@@ -217,6 +225,7 @@ class ReportCardWidget extends StatelessWidget {
               ],
             ),
           ],
+          ]
         ),
       ),
     );
@@ -265,8 +274,8 @@ class ReportCardWidget extends StatelessWidget {
           children: [
             AppBar(
               title: const Text('Image'),
-              backgroundColor: const Color(0xFF2196F3),
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.background,
+              foregroundColor: AppColors.secondary,
               leading: IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: () => Navigator.of(context).pop(),
@@ -275,8 +284,8 @@ class ReportCardWidget extends StatelessWidget {
             Flexible(
               child: Container(
                 constraints: const BoxConstraints(
-                  maxWidth: 400,
-                  maxHeight: 400,
+                  maxWidth: 600,
+                  maxHeight: 600,
                 ),
                 child: kIsWeb
                     ? _buildWebImage(imagePath)

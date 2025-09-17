@@ -2,14 +2,18 @@ import 'package:flutter/foundation.dart';
 import '../data/models/report_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
+import 'package:livework_view/providers/auth_provider.dart' as livework_auth; // Add alias
 
 class ReportProvider with ChangeNotifier {
   List<ReportModel> _reports = [];
   List<ReportModel> _pendingReports = [];
   bool _isLoading = false;
   String? _error;
+  livework_auth.AppUser? _currentUser; // Use alias
 
-  // Firestore subscription for real-time updates
+    // Add a constructor
+  ReportProvider();
+
   StreamSubscription<QuerySnapshot>? _reportSubscription;
 
   List<ReportModel> get reports => _reports;
@@ -17,10 +21,12 @@ class ReportProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  // Get only active reports (not completed)
+  void setCurrentUser(livework_auth.AppUser? user) { // Use alias
+    _currentUser = user;
+  }
+
   List<ReportModel> get activeReports => _reports.where((report) => report.status != ReportStatus.done).toList();
   
-  // Get only completed reports
   List<ReportModel> get completedReports => _reports.where((report) => report.status == ReportStatus.done).toList();
 
   Future<void> loadReports({String? siteId, bool forceRefresh = false}) async {
@@ -28,17 +34,14 @@ class ReportProvider with ChangeNotifier {
     _error = null;
     notifyListeners();
 
-    // Cancel previous subscription if any
     await _reportSubscription?.cancel();
 
     try {
       print('Loading reports from Firestore...');
-      // Try to load from Firestore first
       final query = FirebaseFirestore.instance
           .collection('reports')
           .orderBy('timestamp', descending: true);
 
-      // First, get initial data immediately
       final initialSnapshot = await query.get();
       print('Initial snapshot: ${initialSnapshot.docs.length} reports');
       
@@ -60,12 +63,10 @@ class ReportProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
 
-      // Then set up real-time listener for updates
       _reportSubscription = query.snapshots().listen((snapshot) {
         try {
           print('Real-time update: ${snapshot.docs.length} reports from Firestore');
           if (snapshot.docs.isNotEmpty) {
-            // Use Firestore data
             _reports = snapshot.docs.map((doc) {
               try {
                 return ReportModel.fromFirestore(doc.id, doc.data() as Map<String, dynamic>);
@@ -89,7 +90,6 @@ class ReportProvider with ChangeNotifier {
       }, onError: (e) {
         print('Firestore real-time listener error: $e');
         _error = 'Firestore error: $e';
-        // On error, use mock data
         _loadMockData(siteId);
         notifyListeners();
       });
@@ -97,14 +97,12 @@ class ReportProvider with ChangeNotifier {
     } catch (e) {
       print('Error setting up Firestore connection: $e');
       _error = 'Failed to connect to Firestore: $e';
-      // Fallback to mock data
       _loadMockData(siteId);
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  // Add manual refresh method
   Future<void> refreshReports({String? siteId}) async {
     print('Manually refreshing reports...');
     await loadReports(siteId: siteId, forceRefresh: true);
@@ -140,7 +138,6 @@ class ReportProvider with ChangeNotifier {
         latitude: 29.7605,
         longitude: -95.3699,
       ),
-      // Add a completed report for testing
       ReportModel(
         id: 'report_003',
         siteId: siteId ?? 'site_001',
@@ -170,6 +167,9 @@ class ReportProvider with ChangeNotifier {
     double? mapY,
   }) async {
     try {
+      final reporterName = _currentUser?.name ?? 'Unknown User';
+      final reporterId = _currentUser?.uid ?? 'unknown';
+      
       final newReport = ReportModel(
         id: 'report_${DateTime.now().millisecondsSinceEpoch}',
         siteId: siteId,
@@ -181,23 +181,20 @@ class ReportProvider with ChangeNotifier {
             ? ReportStatus.hazard
             : ReportStatus.inProgress,
         timestamp: DateTime.now(),
-        reporterName: 'Current User', // TODO: Get from auth
-        reporterId: 'user_current', // TODO: Get from auth
+        reporterName: reporterName,
+        reporterId: reporterId,
         latitude: latitude,
         longitude: longitude,
         mapX: mapX,
         mapY: mapY,
       );
 
-      // Add to Firestore
       try {
         final docRef = await FirebaseFirestore.instance.collection('reports').add(newReport.toFirestore());
         print('Report added to Firestore successfully with ID: ${docRef.id}');
-        // The real-time listener will automatically update the local list
       } catch (e) {
         print('Error adding to Firestore: $e');
         _error = 'Failed to save report to cloud: $e';
-        // Only add to local list as fallback if Firestore fails
         _reports.add(newReport);
         notifyListeners();
       }
@@ -218,7 +215,6 @@ class ReportProvider with ChangeNotifier {
         _reports[reportIndex] =
             _reports[reportIndex].copyWith(status: newStatus);
         
-        // Update in Firestore
         try {
           await FirebaseFirestore.instance
               .collection('reports')
@@ -240,7 +236,6 @@ class ReportProvider with ChangeNotifier {
 
   Future<void> deleteReport(String reportId) async {
     try {
-      // Remove from Firestore first
       try {
         await FirebaseFirestore.instance
             .collection('reports')
@@ -254,7 +249,6 @@ class ReportProvider with ChangeNotifier {
         return;
       }
       
-      // Remove from local list
       _reports.removeWhere((report) => report.id == reportId);
       notifyListeners();
     } catch (e) {
@@ -274,7 +268,6 @@ class ReportProvider with ChangeNotifier {
   }
 
   Future<void> syncPendingReports() async {
-    // Move pending reports to main reports list
     _reports.addAll(_pendingReports);
     _pendingReports.clear();
     notifyListeners();
