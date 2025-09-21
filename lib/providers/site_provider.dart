@@ -1,5 +1,10 @@
+// UPDATED: lib/providers/site_provider.dart
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../data/models/site_model.dart';
+import 'language_provider.dart';
+
 class SiteProvider with ChangeNotifier {
   SiteModel? _currentSite;
   List<SiteModel> _availableSites = [];
@@ -20,7 +25,7 @@ class SiteProvider with ChangeNotifier {
       // Simulate API call delay
       await Future.delayed(const Duration(milliseconds: 500));
 
-      // Mock data for demonstration
+      // Mock data with multilingual zone names
       _availableSites = [
         SiteModel(
           id: 'site_001',
@@ -30,62 +35,89 @@ class SiteProvider with ChangeNotifier {
           longitude: -95.3698,
           zones: [
             ZoneModel(
-                id: 'Atmosphere Unit', name: 'Atmosphere Unit', color: 'red'),
-            ZoneModel(id: 'Vacuum Unit', name: 'Vacuum Unit', color: 'blue'),
-            ZoneModel(id: 'Tanks', name: 'Tanks', color: 'green'),
+                id: 'Atmosphere Unit',
+                name: {'en': 'Atmosphere Unit', 'ku': '  یەکا ئەتموسفیرێ'},
+                color: 'red'),
             ZoneModel(
-                id: 'Main Office', name: 'Main Office', color: 'office Area'),
-                            ZoneModel(
-                id: 'Employee Building 1', name: 'Employee Building 1', color: 'office Area'),
-                                            ZoneModel(
-                id: 'Employee Building 2', name: 'Employee Building 2', color: 'office Area'),
+                id: 'Vacuum Unit',
+                name: {'en': 'Vacuum Unit', 'ku': ' یەکا ڤاکیومێ'},
+                color: 'blue'),
+            ZoneModel(
+                id: 'Tanks',
+                name: {'en': 'Tanks', 'ku': 'ناڤ تانکا '},
+                color: 'green'),
+            ZoneModel(
+                id: 'Main Office',
+                name: {'en': 'Main Office', 'ku': 'ئوفیسا سەرەکی'},
+                color: 'orange'),
+            ZoneModel(
+                id: 'Employee Building 1',
+                name: {
+                  'en': 'Employee Building 1',
+                  'ku': 'ئاڤاهیێ کارمەندان ١'
+                },
+                color: 'orange'),
+            ZoneModel(
+                id: 'Employee Building 2',
+                name: {
+                  'en': 'Employee Building 2',
+                  'ku': 'ئاڤاهیێ کارمەندان ٢'
+                },
+                color: 'orange'),
             ZoneModel(
                 id: 'Welding Workshop',
-                name: 'Welding Workshop',
+                name: {'en': 'Welding Workshop', 'ku': 'مەخزەنا لەحیمی '},
                 color: 'orange'),
             ZoneModel(
-                id: 'Loading Area', name: 'Loading Area', color: 'yellow'),
-                  ZoneModel(
+                id: 'Loading Area',
+                name: {'en': 'Loading Area', 'ku': 'شەمعە '},
+                color: 'yellow'),
+            ZoneModel(
                 id: 'Pre Flash Tower',
-                name: 'Pre Flash Tower',
+                name: {'en': 'Pre Flash Tower', 'ku': 'یەکا پری فلاش'},
                 color: 'orange'),
-                 ZoneModel(
+            ZoneModel(
                 id: 'Adjacent Yard',
-                name: 'Adjacent Yard',
+                name: {'en': 'Adjacent Yard', 'ku': 'ساحا تەصفیێ'},
                 color: 'orange'),
-                 ZoneModel(
+            ZoneModel(
                 id: 'Refinery 2',
-                name: 'Refinery 2',
+                name: {'en': 'Refinery 2', 'ku': 'تەصفیا ٢'},
                 color: 'orange'),
-                 ZoneModel(
+            ZoneModel(
                 id: 'Site near Loading Area',
-                name: 'Site near Loading Area',
+                name: {
+                  'en': 'Site near Loading Area',
+                  'ku': 'سایتێ  نێزیک  شەمعا'
+                },
                 color: 'orange'),
-                 ZoneModel(
+            ZoneModel(
                 id: 'Site near Vacuum & Atmosphere',
-                name: 'Site near Vacuum & Atmosphere',
+                name: {
+                  'en': 'Site near Vacuum & Atmosphere',
+                  'ku': 'سایتێ  نێزیک یەکێن سەری '
+                },
                 color: 'orange'),
-                 ZoneModel(
+            ZoneModel(
                 id: 'Water Unit',
-                name: 'Water Unit',
+                name: {'en': 'Water Unit', 'ku': 'یەکا ئاڤێ'},
                 color: 'blue'),
-                 ZoneModel(
+            ZoneModel(
                 id: 'Outside Generators',
-                name: 'Outsite Generators',
+                name: {'en': 'Outside Generators', 'ku': ' موەلیدە'},
                 color: 'red'),
-                 ZoneModel(
+            ZoneModel(
                 id: 'Gabban',
-                name: 'Gabban',
+                name: {'en': 'Gabban', 'ku': 'گەبان'},
                 color: 'orange'),
-                 ZoneModel(
+            ZoneModel(
                 id: 'Boilers',
-                name: 'Boilers',
+                name: {'en': 'Boilers', 'ku': 'بویلەر'},
                 color: 'orange'),
-                 ZoneModel(
+            ZoneModel(
                 id: 'Steam Boilers',
-                name: 'Steam Boilers',
-                color: 'orange')
-                
+                name: {'en': 'Steam Boilers', 'ku': 'ستیم بویلەر '},
+                color: 'orange'),
           ],
         ),
         SiteModel(
@@ -95,8 +127,14 @@ class SiteProvider with ChangeNotifier {
           latitude: 29.7605,
           longitude: -95.3699,
           zones: [
-            ZoneModel(id: 'zone_d', name: 'Warehouse 1', color: 'orange'),
-            ZoneModel(id: 'zone_e', name: 'Warehouse 2', color: 'purple'),
+            ZoneModel(
+                id: 'zone_d',
+                name: {'en': 'Warehouse 1', 'ku': 'کۆگا ١'},
+                color: 'orange'),
+            ZoneModel(
+                id: 'zone_e',
+                name: {'en': 'Warehouse 2', 'ku': 'کۆگا ٢'},
+                color: 'purple'),
           ],
         ),
       ];
@@ -136,6 +174,24 @@ class SiteProvider with ChangeNotifier {
     if (_currentSite?.id == siteId) {
       _currentSite = _availableSites.isNotEmpty ? _availableSites.first : null;
     }
+    notifyListeners();
+  }
+
+  // Helper method to get zone name in current language
+  String getZoneName(BuildContext context, String zoneId) {
+    if (_currentSite == null) return zoneId;
+
+    final zone = _currentSite!.zones.firstWhere(
+      (zone) => zone.id == zoneId,
+      orElse: () => ZoneModel(
+          id: zoneId, name: {'en': zoneId, 'ku': zoneId}, color: 'gray'),
+    );
+
+    return zone.getName(context);
+  }
+
+  // Call this when language changes to update UI
+  void updateOnLanguageChange() {
     notifyListeners();
   }
 }

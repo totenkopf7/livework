@@ -1,3 +1,4 @@
+// UPDATED: lib/report_creation_page.dart
 import 'package:flutter/material.dart';
 import 'package:livework_view/widgets/colors.dart';
 import 'package:provider/provider.dart';
@@ -8,9 +9,10 @@ import 'dart:io';
 import 'package:image/image.dart' as img;
 import 'providers/report_provider.dart';
 import 'providers/site_provider.dart';
-import 'providers/auth_provider.dart' as livework_auth; // Add alias
+import 'providers/auth_provider.dart' as livework_auth;
 import 'data/models/report_model.dart';
 import 'widgets/custom_map_widget.dart';
+import 'helpers/localization_helper.dart'; // ADDED
 
 class ReportCreationPage extends StatefulWidget {
   const ReportCreationPage({Key? key}) : super(key: key);
@@ -50,40 +52,45 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
     }
   }
 
-  Future<Uint8List> _compressImage(XFile imageFile, {int maxSizeKB = 200}) async {
+  Future<Uint8List> _compressImage(XFile imageFile,
+      {int maxSizeKB = 200}) async {
     try {
       final bytes = await imageFile.readAsBytes();
-      
+
       if (bytes.lengthInBytes <= maxSizeKB * 1024) {
         return bytes;
       }
-      
+
       final image = img.decodeImage(bytes);
       if (image == null) return bytes;
-      
+
       int quality = 70;
       Uint8List compressedBytes = bytes;
-      
+
       while (compressedBytes.lengthInBytes > maxSizeKB * 1024 && quality > 10) {
         quality -= 10;
-        compressedBytes = Uint8List.fromList(img.encodeJpg(image, quality: quality));
+        compressedBytes =
+            Uint8List.fromList(img.encodeJpg(image, quality: quality));
       }
-      
+
       if (compressedBytes.lengthInBytes > maxSizeKB * 1024) {
         double scaleFactor = 0.9;
         img.Image resizedImage = image;
-        
-        while (compressedBytes.lengthInBytes > maxSizeKB * 1024 && scaleFactor > 0.3) {
+
+        while (compressedBytes.lengthInBytes > maxSizeKB * 1024 &&
+            scaleFactor > 0.3) {
           int newWidth = (resizedImage.width * scaleFactor).round();
           int newHeight = (resizedImage.height * scaleFactor).round();
-          
-          resizedImage = img.copyResize(resizedImage, width: newWidth, height: newHeight);
-          compressedBytes = Uint8List.fromList(img.encodeJpg(resizedImage, quality: quality));
-          
+
+          resizedImage =
+              img.copyResize(resizedImage, width: newWidth, height: newHeight);
+          compressedBytes =
+              Uint8List.fromList(img.encodeJpg(resizedImage, quality: quality));
+
           scaleFactor -= 0.1;
         }
       }
-      
+
       return compressedBytes;
     } catch (e) {
       print('Image compression error: $e');
@@ -149,7 +156,9 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
 
     if (_selectedZone.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a zone')),
+        SnackBar(
+            content: Text(translate(
+                context, 'please_select_zone'))), // UPDATED: Use translation
       );
       return;
     }
@@ -160,41 +169,46 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
     });
 
     try {
-      final reportProvider = Provider.of<ReportProvider>(context, listen: false);
+      final reportProvider =
+          Provider.of<ReportProvider>(context, listen: false);
       final siteProvider = Provider.of<SiteProvider>(context, listen: false);
 
       if (siteProvider.currentSite == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No site selected')),
+          SnackBar(
+              content: Text(translate(
+                  context, 'no_site_selected'))), // UPDATED: Use translation
         );
         return;
       }
 
       List<String> photoUrls = [];
       int imageIndex = 0;
-      
+
       for (XFile image in _selectedImages) {
         try {
           imageIndex++;
-          
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Processing image $imageIndex/${_selectedImages.length}'),
+              content: Text(
+                  'Processing image $imageIndex/${_selectedImages.length}'),
               duration: const Duration(seconds: 1),
             ),
           );
-          
+
           if (kIsWeb) {
             final compressedBytes = await _compressImage(image, maxSizeKB: 200);
             final base64String = base64Encode(compressedBytes);
             photoUrls.add('data:image/jpeg;base64,$base64String');
           } else {
             final compressedBytes = await _compressImage(image, maxSizeKB: 200);
-            
+
             final tempDir = Directory.systemTemp;
-            final tempFile = File('${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}_$imageIndex.jpg');
+            final tempFile = File(
+                '${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}_$imageIndex.jpg');
             await tempFile.writeAsBytes(compressedBytes);
-            
+
             photoUrls.add(tempFile.path);
           }
         } catch (e) {
@@ -205,7 +219,9 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
 
       if (photoUrls.isEmpty && _selectedImages.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to process all images. Report not created.')),
+          SnackBar(
+              content:
+                  Text('Failed to process all images. Report not created.')),
         );
         return;
       }
@@ -224,29 +240,36 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
 
       if (_uploadErrors.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Report created successfully!')),
+          SnackBar(
+              content: Text(translate(
+                  context, 'report_created'))), // UPDATED: Use translation
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Report created with ${_uploadErrors.length} image errors'),
+            content: Text(
+                'Report created with ${_uploadErrors.length} image errors'),
             action: SnackBarAction(
               label: 'Details',
               onPressed: () {
                 showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: const Text('Image Upload Errors'),
+                    title: Text(translate(context,
+                        'image_upload_errors')), // UPDATED: Use translation
                     content: SingleChildScrollView(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: _uploadErrors.map((error) => Text('• $error')).toList(),
+                        children: _uploadErrors
+                            .map((error) => Text('• $error'))
+                            .toList(),
                       ),
                     ),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: const Text('OK'),
+                        child: Text(translate(
+                            context, 'ok')), // UPDATED: Use translation
                       ),
                     ],
                   ),
@@ -276,18 +299,21 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<livework_auth.LiveWorkAuthProvider>(context); // Use alias
-    
+    final authProvider =
+        Provider.of<livework_auth.LiveWorkAuthProvider>(context);
+
     if (!authProvider.isAdmin) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Create New Report'),
+          title: Text(
+              translate(context, 'create_report')), // UPDATED: Use translation
           backgroundColor: AppColors.background,
           foregroundColor: AppColors.secondary,
         ),
-        body: const Center(
+        body: Center(
           child: Text(
-            'You do not have permission to create reports.',
+            translate(context,
+                'no_permission_create_reports'), // UPDATED: Use translation
             style: TextStyle(fontSize: 16, color: Colors.red),
           ),
         ),
@@ -296,16 +322,18 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create New Report'),
+        title: Text(
+            translate(context, 'create_report')), // UPDATED: Use translation
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.secondary,
       ),
       body: Consumer<SiteProvider>(
         builder: (context, siteProvider, child) {
           if (siteProvider.currentSite == null) {
-            return const Center(
+            return Center(
               child: Text(
-                'No site selected, please configure a site to create reports',
+                translate(
+                    context, 'no_site_selected'), // UPDATED: Use translation
                 style: TextStyle(fontSize: 16),
               ),
             );
@@ -324,19 +352,21 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Report Type',
+                          Text(
+                            translate(context,
+                                'report_type'), // UPDATED: Use translation
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12),
                           Row(
                             children: [
                               Expanded(
                                 child: RadioListTile<ReportType>(
-                                  title: const Text('Work'),
+                                  title: Text(translate(context,
+                                      'work')), // UPDATED: Use translation
                                   value: ReportType.work,
                                   groupValue: _selectedType,
                                   onChanged: (value) {
@@ -348,7 +378,8 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                               ),
                               Expanded(
                                 child: RadioListTile<ReportType>(
-                                  title: const Text('Hazard'),
+                                  title: Text(translate(context,
+                                      'hazard')), // UPDATED: Use translation
                                   value: ReportType.hazard,
                                   groupValue: _selectedType,
                                   onChanged: (value) {
@@ -364,31 +395,34 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Task zone',
+                          Text(
+                            translate(context,
+                                'task_zone'), // UPDATED: Use translation
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12),
                           DropdownButtonFormField<String>(
                             value: _selectedZone.isEmpty ? null : _selectedZone,
-                            decoration: const InputDecoration(
-                              labelText: 'Select Zone',
+                            decoration: InputDecoration(
+                              labelText: translate(context,
+                                  'select_zone'), // UPDATED: Use translation
                               border: OutlineInputBorder(),
                             ),
                             items: siteProvider.currentSite!.zones.map((zone) {
                               return DropdownMenuItem(
                                 value: zone.id,
-                                child: Text(zone.name),
+                                child: Text(zone
+                                    .getName(context)), // Use localized name
                               );
                             }).toList(),
                             onChanged: (value) {
@@ -398,7 +432,8 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                             },
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Please select a zone';
+                                return translate(context,
+                                    'please_select_zone'); // UPDATED: Use translation
                               }
                               return null;
                             },
@@ -407,31 +442,34 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Description',
+                          Text(
+                            translate(context,
+                                'description'), // UPDATED: Use translation
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12),
                           TextFormField(
                             controller: _descriptionController,
                             maxLines: 4,
-                            decoration: const InputDecoration(
-                              labelText: 'Describe the work or hazard',
+                            decoration: InputDecoration(
+                              labelText: translate(context,
+                                  'describe_work_hazard'), // UPDATED: Use translation
                               border: OutlineInputBorder(),
                             ),
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
-                                return 'Please enter a description';
+                                return translate(context,
+                                    'please_enter_description'); // UPDATED: Use translation
                               }
                               return null;
                             },
@@ -440,50 +478,54 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Photos',
+                          Text(
+                            translate(
+                                context, 'photos'), // UPDATED: Use translation
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12),
                           Text(
-                            'Upload photos',
+                            translate(context,
+                                'upload_photos'), // UPDATED: Use translation
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[600],
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12),
                           Row(
                             children: [
                               Expanded(
                                 child: ElevatedButton.icon(
                                   onPressed: _pickImage,
-                                  icon: const Icon(Icons.camera_alt),
-                                  label: const Text('Camera'),
+                                  icon: Icon(Icons.camera_alt),
+                                  label: Text(translate(context,
+                                      'camera')), // UPDATED: Use translation
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              SizedBox(width: 12),
                               Expanded(
                                 child: ElevatedButton.icon(
                                   onPressed: _pickImageFromGallery,
-                                  icon: const Icon(Icons.photo_library),
-                                  label: const Text('Gallery'),
+                                  icon: Icon(Icons.photo_library),
+                                  label: Text(translate(context,
+                                      'gallery')), // UPDATED: Use translation
                                 ),
                               ),
                             ],
                           ),
                           if (_selectedImages.isNotEmpty) ...[
-                            const SizedBox(height: 12),
+                            SizedBox(height: 12),
                             SizedBox(
                               height: 100,
                               child: ListView.builder(
@@ -498,15 +540,18 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                                           width: 100,
                                           height: 100,
                                           decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius:
+                                                BorderRadius.circular(8),
                                             color: Colors.grey[300],
                                           ),
                                           child: FutureBuilder<Uint8List>(
-                                            future: _selectedImages[index].readAsBytes(),
+                                            future: _selectedImages[index]
+                                                .readAsBytes(),
                                             builder: (context, snapshot) {
                                               if (snapshot.hasData) {
                                                 return ClipRRect(
-                                                  borderRadius: BorderRadius.circular(8),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
                                                   child: Image.memory(
                                                     snapshot.data!,
                                                     fit: BoxFit.cover,
@@ -515,7 +560,7 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                                                   ),
                                                 );
                                               } else {
-                                                return const Icon(
+                                                return Icon(
                                                   Icons.image,
                                                   color: Colors.grey,
                                                 );
@@ -533,12 +578,12 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                                               });
                                             },
                                             child: Container(
-                                              padding: const EdgeInsets.all(4),
-                                              decoration: const BoxDecoration(
+                                              padding: EdgeInsets.all(4),
+                                              decoration: BoxDecoration(
                                                 color: Colors.red,
                                                 shape: BoxShape.circle,
                                               ),
-                                              child: const Icon(
+                                              child: Icon(
                                                 Icons.close,
                                                 color: Colors.white,
                                                 size: 16,
@@ -557,29 +602,31 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Select Location on Map',
+                          Text(
+                            translate(context,
+                                'select_location_map'), // UPDATED: Use translation
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Tap on the map to select the work location',
+                          SizedBox(height: 8),
+                          Text(
+                            translate(context,
+                                'tap_map_location'), // UPDATED: Use translation
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.grey,
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12),
                           CustomMapWidget(
                             onLocationSelected: _onMapLocationSelected,
                             markers: _mapX != null && _mapY != null
@@ -593,15 +640,16 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                                       icon: _selectedType == ReportType.work
                                           ? Icons.build
                                           : Icons.warning,
-                                      label: 'Selected Location',
+                                      label: translate(context,
+                                          'selected_location'), // UPDATED: Use translation
                                     ),
                                   ]
                                 : [],
                           ),
                           if (_mapX != null && _mapY != null) ...[
-                            const SizedBox(height: 12),
+                            SizedBox(height: 12),
                             Container(
-                              padding: const EdgeInsets.all(12),
+                              padding: EdgeInsets.all(12),
                               decoration: BoxDecoration(
                                 color: Colors.green.shade50,
                                 borderRadius: BorderRadius.circular(8),
@@ -615,10 +663,10 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                                     color: Colors.green.shade600,
                                     size: 20,
                                   ),
-                                  const SizedBox(width: 8),
+                                  SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
-                                      'Location selected: ${(_mapX! * 100).toStringAsFixed(1)}%, ${(_mapY! * 100).toStringAsFixed(1)}%',
+                                      '${translate(context, 'location_selected')}: ${(_mapX! * 100).toStringAsFixed(1)}%, ${(_mapY! * 100).toStringAsFixed(1)}%', // UPDATED: Use translation
                                       style: TextStyle(
                                         fontSize: 14,
                                         color: Colors.green.shade700,
@@ -633,14 +681,14 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _isSubmitting ? null : _submitReport,
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: EdgeInsets.symmetric(vertical: 16),
                     ),
                     child: _isSubmitting
-                        ? const Row(
+                        ? Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               SizedBox(
@@ -653,10 +701,12 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                                 ),
                               ),
                               SizedBox(width: 12),
-                              Text('Creating Report...'),
+                              Text(translate(context,
+                                  'creating_report')), // UPDATED: Use translation
                             ],
                           )
-                        : const Text('Create Report'),
+                        : Text(translate(context,
+                            'submit_report')), // UPDATED: Use translation
                   ),
                 ],
               ),

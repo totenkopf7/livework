@@ -2,7 +2,8 @@ import 'package:flutter/foundation.dart';
 import '../data/models/report_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
-import 'package:livework_view/providers/auth_provider.dart' as livework_auth; // Add alias
+import 'package:livework_view/providers/auth_provider.dart'
+    as livework_auth; // Add alias
 
 class ReportProvider with ChangeNotifier {
   List<ReportModel> _reports = [];
@@ -11,8 +12,10 @@ class ReportProvider with ChangeNotifier {
   String? _error;
   livework_auth.AppUser? _currentUser; // Use alias
 
-    // Add a constructor
-  ReportProvider();
+  // Add a constructor
+  ReportProvider() {
+    loadReports();
+  }
 
   StreamSubscription<QuerySnapshot>? _reportSubscription;
 
@@ -21,13 +24,16 @@ class ReportProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  void setCurrentUser(livework_auth.AppUser? user) { // Use alias
+  void setCurrentUser(livework_auth.AppUser? user) {
+    // Use alias
     _currentUser = user;
   }
 
-  List<ReportModel> get activeReports => _reports.where((report) => report.status != ReportStatus.done).toList();
-  
-  List<ReportModel> get completedReports => _reports.where((report) => report.status == ReportStatus.done).toList();
+  List<ReportModel> get activeReports =>
+      _reports.where((report) => report.status != ReportStatus.done).toList();
+
+  List<ReportModel> get completedReports =>
+      _reports.where((report) => report.status == ReportStatus.done).toList();
 
   Future<void> loadReports({String? siteId, bool forceRefresh = false}) async {
     _isLoading = true;
@@ -44,39 +50,52 @@ class ReportProvider with ChangeNotifier {
 
       final initialSnapshot = await query.get();
       print('Initial snapshot: ${initialSnapshot.docs.length} reports');
-      
+
       if (initialSnapshot.docs.isNotEmpty) {
-        _reports = initialSnapshot.docs.map((doc) {
-          try {
-            return ReportModel.fromFirestore(doc.id, doc.data() as Map<String, dynamic>);
-          } catch (e) {
-            print('Error parsing document ${doc.id}: $e');
-            return null;
-          }
-        }).where((report) => report != null).cast<ReportModel>().toList();
-        print('Successfully loaded ${_reports.length} reports from initial snapshot');
+        _reports = initialSnapshot.docs
+            .map((doc) {
+              try {
+                return ReportModel.fromFirestore(
+                    doc.id, doc.data() as Map<String, dynamic>);
+              } catch (e) {
+                print('Error parsing document ${doc.id}: $e');
+                return null;
+              }
+            })
+            .where((report) => report != null)
+            .cast<ReportModel>()
+            .toList();
+        print(
+            'Successfully loaded ${_reports.length} reports from initial snapshot');
       } else {
         print('No reports found in initial snapshot, using mock data');
         _loadMockData(siteId);
       }
-      
+
       _isLoading = false;
       notifyListeners();
 
       _reportSubscription = query.snapshots().listen((snapshot) {
         try {
-          print('Real-time update: ${snapshot.docs.length} reports from Firestore');
+          print(
+              'Real-time update: ${snapshot.docs.length} reports from Firestore');
           if (snapshot.docs.isNotEmpty) {
-            _reports = snapshot.docs.map((doc) {
-              try {
-                return ReportModel.fromFirestore(doc.id, doc.data() as Map<String, dynamic>);
-              } catch (e) {
-                print('Error parsing document ${doc.id}: $e');
-                return null;
-              }
-            }).where((report) => report != null).cast<ReportModel>().toList();
-            
-            print('Successfully updated ${_reports.length} reports from real-time listener');
+            _reports = snapshot.docs
+                .map((doc) {
+                  try {
+                    return ReportModel.fromFirestore(
+                        doc.id, doc.data() as Map<String, dynamic>);
+                  } catch (e) {
+                    print('Error parsing document ${doc.id}: $e');
+                    return null;
+                  }
+                })
+                .where((report) => report != null)
+                .cast<ReportModel>()
+                .toList();
+
+            print(
+                'Successfully updated ${_reports.length} reports from real-time listener');
           } else {
             print('No reports found in real-time update, using mock data');
             _loadMockData(siteId);
@@ -93,7 +112,6 @@ class ReportProvider with ChangeNotifier {
         _loadMockData(siteId);
         notifyListeners();
       });
-
     } catch (e) {
       print('Error setting up Firestore connection: $e');
       _error = 'Failed to connect to Firestore: $e';
@@ -169,7 +187,7 @@ class ReportProvider with ChangeNotifier {
     try {
       final reporterName = _currentUser?.name ?? 'Unknown User';
       final reporterId = _currentUser?.uid ?? 'unknown';
-      
+
       final newReport = ReportModel(
         id: 'report_${DateTime.now().millisecondsSinceEpoch}',
         siteId: siteId,
@@ -190,7 +208,9 @@ class ReportProvider with ChangeNotifier {
       );
 
       try {
-        final docRef = await FirebaseFirestore.instance.collection('reports').add(newReport.toFirestore());
+        final docRef = await FirebaseFirestore.instance
+            .collection('reports')
+            .add(newReport.toFirestore());
         print('Report added to Firestore successfully with ID: ${docRef.id}');
       } catch (e) {
         print('Error adding to Firestore: $e');
@@ -214,18 +234,19 @@ class ReportProvider with ChangeNotifier {
       if (reportIndex != -1) {
         _reports[reportIndex] =
             _reports[reportIndex].copyWith(status: newStatus);
-        
+
         try {
           await FirebaseFirestore.instance
               .collection('reports')
               .doc(reportId)
               .update({'status': newStatus.name});
-          print('Report status updated in Firestore: $reportId -> ${newStatus.name}');
+          print(
+              'Report status updated in Firestore: $reportId -> ${newStatus.name}');
         } catch (e) {
           print('Error updating report status in Firestore: $e');
           _error = 'Failed to update report status in cloud: $e';
         }
-        
+
         notifyListeners();
       }
     } catch (e) {
@@ -248,7 +269,7 @@ class ReportProvider with ChangeNotifier {
         notifyListeners();
         return;
       }
-      
+
       _reports.removeWhere((report) => report.id == reportId);
       notifyListeners();
     } catch (e) {

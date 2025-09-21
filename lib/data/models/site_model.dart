@@ -1,3 +1,8 @@
+// UPDATED: lib/data/models/site_model.dart
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:livework_view/providers/language_provider.dart';
+
 class SiteModel {
   final String id;
   final String name;
@@ -74,19 +79,27 @@ class SiteModel {
 
 class ZoneModel {
   final String id;
-  final String name;
+  final Map<String, String> name; // Changed to support multiple languages
   final String color;
 
   ZoneModel({
     required this.id,
-    required this.name,
+    required Map<String, String> name,
     required this.color,
-  });
+  }) : name = name;
+
+  // Helper method to get name in current language
+  String getName(BuildContext context) {
+    final languageProvider =
+        Provider.of<LanguageProvider>(context, listen: false);
+    final currentLocale = languageProvider.currentLocale.languageCode;
+    return name[currentLocale] ?? name['en'] ?? id;
+  }
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'name': name,
+      'name': name, // Now stores multilingual names
       'color': color,
     };
   }
@@ -94,14 +107,14 @@ class ZoneModel {
   factory ZoneModel.fromMap(Map<String, dynamic> map) {
     return ZoneModel(
       id: map['id'] ?? '',
-      name: map['name'] ?? '',
+      name: Map<String, String>.from(map['name'] ?? {'en': map['id'] ?? ''}),
       color: map['color'] ?? 'blue',
     );
   }
 
   ZoneModel copyWith({
     String? id,
-    String? name,
+    Map<String, String>? name,
     String? color,
   }) {
     return ZoneModel(

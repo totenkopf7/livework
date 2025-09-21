@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:livework_view/pages/login_page.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -13,6 +14,10 @@ import 'providers/site_provider.dart';
 import 'providers/auth_provider.dart' as livework_auth;
 import 'pages/settings_page.dart';
 import 'pages/completed_reports_page.dart';
+import 'providers/language_provider.dart';
+import 'helpers/localization_helper.dart';
+import 'localization/kurdish_material_localizations.dart'; // ADDED
+import 'localization/kurdish_cupertino_localizations.dart'; // ADDED
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,7 +25,10 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   runApp(const LiveWorkViewApp());
+
 }
+
+
 
 class LiveWorkViewApp extends StatelessWidget {
   const LiveWorkViewApp({Key? key}) : super(key: key);
@@ -29,7 +37,9 @@ class LiveWorkViewApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => livework_auth.LiveWorkAuthProvider()),
+        ChangeNotifierProvider(
+            create: (_) => livework_auth.LiveWorkAuthProvider()),
+        ChangeNotifierProvider(create: (_) => LanguageProvider()),
         ChangeNotifierProvider(
           create: (_) {
             final siteProvider = SiteProvider();
@@ -37,7 +47,8 @@ class LiveWorkViewApp extends StatelessWidget {
             return siteProvider;
           },
         ),
-        ChangeNotifierProxyProvider<livework_auth.LiveWorkAuthProvider, ReportProvider>(
+        ChangeNotifierProxyProvider<livework_auth.LiveWorkAuthProvider,
+            ReportProvider>(
           create: (context) => ReportProvider(),
           update: (context, authProvider, reportProvider) {
             if (reportProvider == null) {
@@ -48,56 +59,82 @@ class LiveWorkViewApp extends StatelessWidget {
           },
         ),
       ],
-      child: MaterialApp(
-        title: 'LiveWork View',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          primaryColor: const Color(0xFF2196F3),
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF2196F3),
-            brightness: Brightness.light,
-          ),
-          appBarTheme: const AppBarTheme(
-            backgroundColor: AppColors.background,
-            foregroundColor: AppColors.secondary,
-            elevation: 2,
-            iconTheme: IconThemeData(color: Colors.white),
-          ),
-          iconTheme: const IconThemeData(color: Colors.black),
-          cardTheme: CardTheme(
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.background,
-              foregroundColor: AppColors.secondary,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+      child: Consumer<LanguageProvider>(
+        builder: (context, languageProvider, child) {
+          return MaterialApp(
+            title: 'LiveWork View',
+            theme: ThemeData(
+              primarySwatch: Colors.blue,
+              primaryColor: const Color(0xFF2196F3),
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: const Color(0xFF2196F3),
+                brightness: Brightness.light,
+              ),
+              appBarTheme: const AppBarTheme(
+                backgroundColor: AppColors.background,
+                foregroundColor: AppColors.secondary,
+                elevation: 2,
+                iconTheme: IconThemeData(color: Colors.white),
+              ),
+              iconTheme: const IconThemeData(color: Colors.black),
+              cardTheme: CardTheme(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              elevatedButtonTheme: ElevatedButtonThemeData(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.background,
+                  foregroundColor: AppColors.secondary,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+              inputDecorationTheme: InputDecorationTheme(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+              bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+                backgroundColor: AppColors.background,
+                selectedItemColor: AppColors.secondary,
+                unselectedItemColor: Colors.grey,
+                type: BottomNavigationBarType.fixed,
+                showSelectedLabels: true,
+                showUnselectedLabels: true,
               ),
             ),
-          ),
-          inputDecorationTheme: InputDecorationTheme(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          ),
-          bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-            backgroundColor: AppColors.background,
-            selectedItemColor: AppColors.secondary,
-            unselectedItemColor: Colors.grey,
-            type: BottomNavigationBarType.fixed,
-            showSelectedLabels: true,
-            showUnselectedLabels: true,
-          ),
-        ),
-        home: const AuthWrapper(),
-        debugShowCheckedModeBanner: false,
+            home: const AuthWrapper(),
+            debugShowCheckedModeBanner: false,
+            locale: languageProvider.currentLocale,
+            supportedLocales: const [
+              Locale('en', 'US'),
+              Locale('ku', 'IQ'),
+            ],
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              KurdishMaterialLocalizations.delegate, // ADDED
+              KurdishCupertinoLocalizations.delegate, // ADDED
+            ],
+            localeResolutionCallback: (locale, supportedLocales) {
+              for (var supportedLocale in supportedLocales) {
+                if (supportedLocale.languageCode == locale?.languageCode &&
+                    supportedLocale.countryCode == locale?.countryCode) {
+                  return supportedLocale;
+                }
+              }
+              return supportedLocales.first;
+            },
+          );
+        },
       ),
     );
   }
@@ -113,16 +150,17 @@ class AuthWrapper extends StatefulWidget {
 class _AuthWrapperState extends State<AuthWrapper> {
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<livework_auth.LiveWorkAuthProvider>(context);
-    
+    final authProvider =
+        Provider.of<livework_auth.LiveWorkAuthProvider>(context);
+
     if (authProvider.isLoading) {
       return const SplashScreen();
     }
-    
+
     if (authProvider.user == null) {
       return const LoginPage();
     }
-    
+
     return const MainNavigationPage();
   }
 }
@@ -142,21 +180,21 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
-    
+
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     );
-    
+
     _bounceAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(
         parent: _controller,
         curve: Curves.fastEaseInToSlowEaseOut,
       ),
     );
-    
+
     _controller.forward();
-    
+
     Future.delayed(const Duration(seconds: 4), () {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const MainNavigationPage()),
@@ -189,12 +227,11 @@ class _SplashScreenState extends State<SplashScreen>
             ),
             const SizedBox(height: 40),
             const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(AppColors.secondary),
-              strokeWidth: 0.5
-            ),
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.secondary),
+                strokeWidth: 0.5),
             const SizedBox(height: 20),
-            const Text(
-              "Loading...",
+            Text(
+              translate(context, 'loading'),
               style: TextStyle(color: AppColors.secondary, fontSize: 10),
             ),
           ],
@@ -211,127 +248,132 @@ class MainNavigationPage extends StatefulWidget {
   State<MainNavigationPage> createState() => _MainNavigationPageState();
 }
 
+// UPDATED: lib/main.dart (MainNavigationPage section)
 class _MainNavigationPageState extends State<MainNavigationPage> {
   int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<livework_auth.LiveWorkAuthProvider>(context);
-    
-    // Create pages list conditionally based on user role
-    List<Widget> pages = [
-      const DashboardPage(),
-      const MapPage(),
-    ];
-    
-    // Only show "New Report" page for admin users
-    if (authProvider.isAdmin) {
-      pages.add(const ReportCreationPage());
-    } else {
-      // For non-admin users, add a placeholder or redirect to another page
-      pages.add(const Center(child: Text('No permission to create reports')));
-    }
-    
-    // Add the remaining pages
-    pages.addAll([
-      const CompletedReportsPage(),
-      const SettingsPage(),
-    ]);
-    
-    return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: pages,
-      ),
-      bottomNavigationBar: Builder(
-        builder: (context) {
-          final authProvider = Provider.of<livework_auth.LiveWorkAuthProvider>(context, listen: true);
-          final reportProvider = Provider.of<ReportProvider>(context, listen: true);
-          
-          final completedCount = reportProvider.completedReports.length;
-          
-          // Create items list conditionally based on user role
-          List<BottomNavigationBarItem> items = [
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard, size: 24),
-              label: 'Dashboard',
-            ),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.map, size: 24),
-              label: 'Map',
-            ),
-          ];
-          
-          // Only show "New Report" tab for admin users
-          if (authProvider.isAdmin) {
-            items.add(
-              const BottomNavigationBarItem(
-                icon: Icon(Icons.add_circle_outline, size: 24),
-                label: 'New Report',
-              ),
-            );
-          } else {
-            // For non-admin users, add a disabled tab
-            items.add(
-              const BottomNavigationBarItem(
-                icon: Icon(Icons.block, size: 24),
-                label: 'No Access',
-              ),
-            );
-          }
-          
-          // Add the remaining tabs
-          items.addAll([
-            BottomNavigationBarItem(
-              icon: completedCount > 0 ? _buildBadgeIcon(completedCount) : const Icon(Icons.assignment_turned_in, size: 24),
-              label: 'Reports',
-            ),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.settings, size: 24),
-              label: 'Settings',
-            ),
-          ]);
-          
-          return BottomNavigationBar(
-            currentIndex: _currentIndex,
-            onTap: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
+    return Consumer<LanguageProvider>(
+      // ADDED: Listen to language changes
+      builder: (context, languageProvider, child) {
+        final authProvider =
+            Provider.of<livework_auth.LiveWorkAuthProvider>(context);
+
+        List<Widget> pages = [
+          const DashboardPage(),
+          const MapPage(),
+        ];
+
+        if (authProvider.isAdmin) {
+          pages.add(const ReportCreationPage());
+        } else {
+          pages.add(Center(child: Text(translate(context, 'no_access'))));
+        }
+
+        pages.addAll([
+          const CompletedReportsPage(),
+          const SettingsPage(),
+        ]);
+
+        return Scaffold(
+          body: IndexedStack(
+            index: _currentIndex,
+            children: pages,
+          ),
+          bottomNavigationBar: Builder(
+            builder: (context) {
+              final authProvider =
+                  Provider.of<livework_auth.LiveWorkAuthProvider>(context,
+                      listen: true);
+              final reportProvider =
+                  Provider.of<ReportProvider>(context, listen: true);
+
+              final completedCount = reportProvider.completedReports.length;
+
+              List<BottomNavigationBarItem> items = [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.dashboard, size: 24),
+                  label: translate(context, 'dashboard'),
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.map, size: 24),
+                  label: translate(context, 'map'),
+                ),
+              ];
+
+              if (authProvider.isAdmin) {
+                items.add(
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.add_circle_outline, size: 24),
+                    label: translate(context, 'new_report'),
+                  ),
+                );
+              } else {
+                items.add(
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.block, size: 24),
+                    label: translate(context, 'no_access'),
+                  ),
+                );
+              }
+
+              items.addAll([
+                BottomNavigationBarItem(
+                  icon: completedCount > 0
+                      ? _buildBadgeIcon(completedCount)
+                      : Icon(Icons.assignment_turned_in, size: 24),
+                  label: translate(context, 'reports'),
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.settings, size: 24),
+                  label: translate(context, 'settings'),
+                ),
+              ]);
+
+              return BottomNavigationBar(
+                currentIndex: _currentIndex,
+                onTap: (index) {
+                  setState(() {
+                    _currentIndex = index;
+                  });
+                },
+                items: items,
+                selectedItemColor: AppColors.secondary,
+                unselectedItemColor: Colors.grey,
+                type: BottomNavigationBarType.fixed,
+                showSelectedLabels: true,
+                showUnselectedLabels: true,
+              );
             },
-            items: items,
-            selectedItemColor: AppColors.secondary,
-            unselectedItemColor: Colors.grey,
-            type: BottomNavigationBarType.fixed,
-            showSelectedLabels: true,
-            showUnselectedLabels: true,
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
+  // ... rest of the code
 
   Widget _buildBadgeIcon(int count) {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        const Icon(Icons.assignment_turned_in, size: 24),
+        Icon(Icons.assignment_turned_in, size: 24),
         Positioned(
           right: -8,
           top: -8,
           child: Container(
-            padding: const EdgeInsets.all(4),
-            decoration: const BoxDecoration(
+            padding: EdgeInsets.all(4),
+            decoration: BoxDecoration(
               color: Colors.red,
               shape: BoxShape.circle,
             ),
-            constraints: const BoxConstraints(
+            constraints: BoxConstraints(
               minWidth: 18,
               minHeight: 18,
             ),
             child: Text(
               count > 99 ? '99+' : count.toString(),
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.white,
                 fontSize: 10,
                 fontWeight: FontWeight.bold,

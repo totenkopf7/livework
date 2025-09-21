@@ -1,7 +1,9 @@
+// UPDATED: lib/pages/login_page.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:livework_view/widgets/colors.dart';
-import 'package:livework_view/providers/auth_provider.dart' as livework_auth; // Add alias
+import 'package:livework_view/providers/auth_provider.dart' as livework_auth;
+import 'package:livework_view/helpers/localization_helper.dart'; // ADDED: Import localization helper
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -40,8 +42,8 @@ class _LoginPageState extends State<LoginPage> {
                 color: AppColors.secondary,
               ),
               const SizedBox(height: 32),
-              const Text(
-                'LiveWork View',
+              Text(
+                translate(context, 'app_title'), // UPDATED: Use translation
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -49,8 +51,8 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Sign in to continue',
+              Text(
+                translate(context, 'sign_in_to_continue'), // UPDATED: Use translation
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.grey,
@@ -70,18 +72,18 @@ class _LoginPageState extends State<LoginPage> {
                       children: [
                         TextFormField(
                           controller: _emailController,
-                          decoration: const InputDecoration(
-                            labelText: 'Email',
+                          decoration: InputDecoration(
+                            labelText: translate(context, 'email'), // UPDATED: Use translation
                             prefixIcon: Icon(Icons.email),
                             border: OutlineInputBorder(),
                           ),
                           keyboardType: TextInputType.emailAddress,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter your email';
+                              return translate(context, 'please_enter_email'); // UPDATED: Use translation
                             }
                             if (!value.contains('@')) {
-                              return 'Please enter a valid email';
+                              return translate(context, 'please_enter_valid_email'); // UPDATED: Use translation
                             }
                             return null;
                           },
@@ -90,8 +92,8 @@ class _LoginPageState extends State<LoginPage> {
                         TextFormField(
                           controller: _passwordController,
                           decoration: InputDecoration(
-                            labelText: 'Password',
-                            prefixIcon: const Icon(Icons.lock),
+                            labelText: translate(context, 'password'), // UPDATED: Use translation
+                            prefixIcon: Icon(Icons.lock),
                             suffixIcon: IconButton(
                               icon: Icon(
                                 _obscurePassword
@@ -104,21 +106,21 @@ class _LoginPageState extends State<LoginPage> {
                                 });
                               },
                             ),
-                            border: const OutlineInputBorder(),
+                            border: OutlineInputBorder(),
                           ),
                           obscureText: _obscurePassword,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter your password';
+                              return translate(context, 'please_enter_password'); // UPDATED: Use translation
                             }
                             if (value.length < 6) {
-                              return 'Password must be at least 6 characters';
+                              return translate(context, 'password_min_length'); // UPDATED: Use translation
                             }
                             return null;
                           },
                         ),
                         const SizedBox(height: 24),
-                        Consumer<livework_auth.LiveWorkAuthProvider>( // Use alias
+                        Consumer<livework_auth.LiveWorkAuthProvider>(
                           builder: (context, authProvider, child) {
                             if (authProvider.isLoading) {
                               return const CircularProgressIndicator();
@@ -150,15 +152,15 @@ class _LoginPageState extends State<LoginPage> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
-                              child: const Text('Sign In'),
+                              child: Text(translate(context, 'sign_in')), // UPDATED: Use translation
                             );
                           },
                         ),
-                        if (context.watch<livework_auth.LiveWorkAuthProvider>().error != null) ...[ // Use alias
+                        if (context.watch<livework_auth.LiveWorkAuthProvider>().error != null) ...[
                           const SizedBox(height: 16),
                           Text(
-                            context.watch<livework_auth.LiveWorkAuthProvider>().error!, // Use alias
-                            style: const TextStyle(
+                            context.watch<livework_auth.LiveWorkAuthProvider>().error!,
+                            style: TextStyle(
                               color: Colors.red,
                               fontSize: 14,
                             ),
@@ -170,24 +172,6 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
-              // const Card(
-              //   child: Padding(
-              //     padding: EdgeInsets.all(16.0),
-              //     child: Column(
-              //       crossAxisAlignment: CrossAxisAlignment.start,
-              //       children: [
-              //         Text(
-              //           'Demo Credentials:',
-              //           style: TextStyle(fontWeight: FontWeight.bold),
-              //         ),
-              //         SizedBox(height: 8),
-              //         Text('Admin: admin@example.com / admin123'),
-              //         Text('User: user@example.com / user123'),
-              //       ],
-              //     ),
-              //   ),
-              // ),
             ],
           ),
         ),
