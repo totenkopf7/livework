@@ -19,6 +19,8 @@ class ReportModel {
   final double? longitude;
   final double? mapX;
   final double? mapY;
+  final bool isArchived;
+  final DateTime? archivedDate;
 
   ReportModel({
     required this.id,
@@ -35,6 +37,8 @@ class ReportModel {
     this.longitude,
     this.mapX,
     this.mapY,
+    this.isArchived = false,
+    this.archivedDate,
   });
 
   Map<String, dynamic> toFirestore() {
@@ -52,6 +56,8 @@ class ReportModel {
       'longitude': longitude,
       'mapX': mapX,
       'mapY': mapY,
+      'isArchived': isArchived,
+      'archivedDate': archivedDate != null ? Timestamp.fromDate(archivedDate!) : null,
     };
   }
 
@@ -79,6 +85,10 @@ class ReportModel {
       longitude: data['longitude']?.toDouble(),
       mapX: data['mapX']?.toDouble(),
       mapY: data['mapY']?.toDouble(),
+      isArchived: data['isArchived'] ?? false,
+      archivedDate: data['archivedDate'] != null 
+          ? (data['archivedDate'] as Timestamp).toDate()
+          : null,
     );
   }
 
@@ -97,6 +107,8 @@ class ReportModel {
     double? longitude,
     double? mapX,
     double? mapY,
+    bool? isArchived,
+    DateTime? archivedDate,
   }) {
     return ReportModel(
       id: id ?? this.id,
@@ -113,12 +125,14 @@ class ReportModel {
       longitude: longitude ?? this.longitude,
       mapX: mapX ?? this.mapX,
       mapY: mapY ?? this.mapY,
+      isArchived: isArchived ?? this.isArchived,
+      archivedDate: archivedDate ?? this.archivedDate,
     );
   }
 
   @override
   String toString() {
-    return 'ReportModel(id: $id, siteId: $siteId, zone: $zone, type: $type, status: $status)';
+    return 'ReportModel(id: $id, siteId: $siteId, zone: $zone, type: $type, status: $status, isArchived: $isArchived)';
   }
 
   @override

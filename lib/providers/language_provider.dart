@@ -19,23 +19,23 @@ class LanguageProvider with ChangeNotifier {
   Future<void> _loadSavedLanguage() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final languageCode = prefs.getString('languageCode') ?? 'en';
+      final languageCode = prefs.getString('languageCode') ?? 'en'; // Default to English
       final countryCode = prefs.getString('countryCode') ?? 'US';
 
       print("Loading saved language: $languageCode, $countryCode");
       await loadLanguage(Locale(languageCode, countryCode));
     } catch (e) {
       print("Error loading saved language: $e");
+      // Force English if there's an error
       await loadLanguage(const Locale('en', 'US'));
     }
   }
 
-  // UPDATED: lib/providers/language_provider.dart (loadLanguage method)
   Future<void> loadLanguage(Locale locale) async {
     if (_isLoading) return;
 
     _isLoading = true;
-    notifyListeners(); // Notify listeners that loading started
+    notifyListeners();
 
     try {
       print("Attempting to load language: ${locale.languageCode}");
@@ -46,6 +46,11 @@ class LanguageProvider with ChangeNotifier {
 
       if (!manifestMap.containsKey(languageAssetPath)) {
         print("Language file not found: $languageAssetPath");
+        // Fallback to English if language file not found
+        if (locale.languageCode != 'en') {
+          await loadLanguage(const Locale('en', 'US'));
+          return;
+        }
         throw Exception("Language file not found");
       }
 
@@ -66,13 +71,14 @@ class LanguageProvider with ChangeNotifier {
       print("Available keys: ${_localizedStrings.keys.length}");
     } catch (e) {
       print("Error loading language file: $e");
+      // Always fallback to English on error
       if (locale.languageCode != 'en') {
         print("Falling back to English");
         await loadLanguage(const Locale('en', 'US'));
       }
     } finally {
       _isLoading = false;
-      notifyListeners(); // Notify listeners that loading completed
+      notifyListeners();
     }
   }
 

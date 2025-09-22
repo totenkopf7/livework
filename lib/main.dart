@@ -14,10 +14,11 @@ import 'providers/site_provider.dart';
 import 'providers/auth_provider.dart' as livework_auth;
 import 'pages/settings_page.dart';
 import 'pages/completed_reports_page.dart';
+import 'pages/archived_reports_page.dart';
 import 'providers/language_provider.dart';
 import 'helpers/localization_helper.dart';
-import 'localization/kurdish_material_localizations.dart'; // ADDED
-import 'localization/kurdish_cupertino_localizations.dart'; // ADDED
+import 'localization/kurdish_material_localizations.dart';
+import 'localization/kurdish_cupertino_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,10 +26,7 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   runApp(const LiveWorkViewApp());
-
 }
-
-
 
 class LiveWorkViewApp extends StatelessWidget {
   const LiveWorkViewApp({Key? key}) : super(key: key);
@@ -121,8 +119,8 @@ class LiveWorkViewApp extends StatelessWidget {
               GlobalMaterialLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
-              KurdishMaterialLocalizations.delegate, // ADDED
-              KurdishCupertinoLocalizations.delegate, // ADDED
+              KurdishMaterialLocalizations.delegate,
+              KurdishCupertinoLocalizations.delegate,
             ],
             localeResolutionCallback: (locale, supportedLocales) {
               for (var supportedLocale in supportedLocales) {
@@ -248,14 +246,12 @@ class MainNavigationPage extends StatefulWidget {
   State<MainNavigationPage> createState() => _MainNavigationPageState();
 }
 
-// UPDATED: lib/main.dart (MainNavigationPage section)
 class _MainNavigationPageState extends State<MainNavigationPage> {
   int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     return Consumer<LanguageProvider>(
-      // ADDED: Listen to language changes
       builder: (context, languageProvider, child) {
         final authProvider =
             Provider.of<livework_auth.LiveWorkAuthProvider>(context);
@@ -273,6 +269,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
 
         pages.addAll([
           const CompletedReportsPage(),
+          const ArchivedReportsPage(),
           const SettingsPage(),
         ]);
 
@@ -290,6 +287,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
                   Provider.of<ReportProvider>(context, listen: true);
 
               final completedCount = reportProvider.completedReports.length;
+              final archivedCount = reportProvider.archivedReports.length;
 
               List<BottomNavigationBarItem> items = [
                 BottomNavigationBarItem(
@@ -326,6 +324,12 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
                   label: translate(context, 'reports'),
                 ),
                 BottomNavigationBarItem(
+                  icon: archivedCount > 0
+                      ? _buildBadgeIcon(archivedCount, color: Colors.orange)
+                      : Icon(Icons.archive, size: 24),
+                  label: translate(context, 'archived'),
+                ),
+                BottomNavigationBarItem(
                   icon: Icon(Icons.settings, size: 24),
                   label: translate(context, 'settings'),
                 ),
@@ -351,9 +355,8 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
       },
     );
   }
-  // ... rest of the code
 
-  Widget _buildBadgeIcon(int count) {
+  Widget _buildBadgeIcon(int count, {Color color = Colors.red}) {
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -364,7 +367,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
           child: Container(
             padding: EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: Colors.red,
+              color: color,
               shape: BoxShape.circle,
             ),
             constraints: BoxConstraints(

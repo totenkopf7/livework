@@ -7,6 +7,7 @@ import '../providers/report_provider.dart';
 import '../providers/site_provider.dart';
 import '../data/models/report_model.dart';
 import '../widgets/report_card_widget.dart';
+import '../helpers/localization_helper.dart';
 
 class CompletedReportsPage extends StatefulWidget {
   const CompletedReportsPage({Key? key}) : super(key: key);
@@ -34,24 +35,10 @@ class _CompletedReportsPageState extends State<CompletedReportsPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Completed Reports'),
+        title: Text(translate(context, 'completed_reports')),
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.secondary,
         actions: [
-          if (kIsWeb) // Only show delete all button on web
-            // Consumer<ReportProvider>(
-            //   builder: (context, reportProvider, child) {
-            //     final completedCount = reportProvider.completedReports.length;
-            //     if (completedCount > 0) {
-            //       return IconButton(
-            //         icon: const Icon(Icons.delete_sweep),
-            //         onPressed: () => _showDeleteAllConfirmation(reportProvider),
-            //         tooltip: 'Delete All Completed Reports',
-            //       );
-            //     }
-            //     return const SizedBox.shrink();
-            //   },
-            // ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
@@ -61,17 +48,17 @@ class _CompletedReportsPageState extends State<CompletedReportsPage> {
                 reportProvider.refreshReports(siteId: siteProvider.currentSite!.id);
               }
             },
-            tooltip: 'Refresh Reports',
+            tooltip: translate(context, 'refresh_reports'),
           ),
         ],
       ),
       body: Consumer2<ReportProvider, SiteProvider>(
         builder: (context, reportProvider, siteProvider, child) {
           if (siteProvider.currentSite == null) {
-            return const Center(
+            return Center(
               child: Text(
-                'No site selected, please configure a site to view reports',
-                style: TextStyle(fontSize: 16),
+                translate(context, 'no_site_selected'),
+                style: const TextStyle(fontSize: 16),
               ),
             );
           }
@@ -86,7 +73,7 @@ class _CompletedReportsPageState extends State<CompletedReportsPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Error: ${reportProvider.error}',
+                    '${translate(context, 'error')}: ${reportProvider.error}',
                     style: const TextStyle(color: Colors.red),
                   ),
                   const SizedBox(height: 16),
@@ -95,7 +82,7 @@ class _CompletedReportsPageState extends State<CompletedReportsPage> {
                       reportProvider.loadReports(
                           siteId: siteProvider.currentSite!.id);
                     },
-                    child: const Text('Retry'),
+                    child: Text(translate(context, 'retry')),
                   ),
                 ],
               ),
@@ -119,10 +106,10 @@ class _CompletedReportsPageState extends State<CompletedReportsPage> {
             await reportProvider.refreshReports(siteId: siteProvider.currentSite!.id);
           }
         },
-        child: const Center(
+        child: Center(
           child: Text(
-            'No completed reports found\nPull down to refresh',
-            style: TextStyle(fontSize: 16, color: Colors.grey),
+            translate(context, 'no_completed_reports'),
+            style: const TextStyle(fontSize: 16, color: Colors.grey),
             textAlign: TextAlign.center,
           ),
         ),
@@ -148,101 +135,163 @@ class _CompletedReportsPageState extends State<CompletedReportsPage> {
   }
 
   Widget _buildDismissibleReportCard(ReportModel report, ReportProvider reportProvider, bool isAdmin) {
-    // For web platform, use a delete button instead of swipe gesture
     if (kIsWeb && isAdmin) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 12),
         child: ReportCardWidget(
           report: report,
           onStatusChanged: (newStatus) {
-            // Completed reports can't change status, but we keep this for consistency
             reportProvider.updateReportStatus(report.id, newStatus);
           },
           showDeleteButton: isAdmin,
+          showArchiveButton: isAdmin,
+          showStatusDropdown: true, // FIXED: Always show status dropdown in Reports section
           onDelete: () => _showDeleteConfirmation(report, reportProvider),
+          onArchive: () => _showArchiveConfirmation(report, reportProvider),
         ),
       );
     }
 
-    // For mobile platforms, use swipe-to-delete
-     if (isAdmin) {
+    if (isAdmin) {
       return Dismissible(
-        key: Key(report.id),
-        direction: DismissDirection.endToStart,
-        background: Container(
-          alignment: Alignment.centerRight,
-          padding: const EdgeInsets.only(right: 20),
-          margin: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(
-            color: Colors.red,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Icon(
-            Icons.delete,
-            color: Colors.white,
-            size: 30,
-          ),
-        ),
+        key: Key('${report.id}_completed'),
+        direction: DismissDirection.horizontal,
+        background: _buildSwipeBackground(Colors.orange, Icons.archive, translate(context, 'archive')),
+        secondaryBackground: _buildSwipeBackground(Colors.red, Icons.delete, translate(context, 'delete')),
         confirmDismiss: (direction) async {
-          return await showDialog<bool>(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Delete Report'),
-              content: Text('Are you sure you want to delete "${report.description}"? This action cannot be undone.'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text('Cancel'),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(true),
-                  style: TextButton.styleFrom(foregroundColor: Colors.red),
-                  child: const Text('Delete'),
-                ),
-              ],
-            ),
-          );
+          if (direction == DismissDirection.endToStart) {
+            return await _showDeleteConfirmationDialog(report);
+          } else {
+            return await _showArchiveConfirmationDialog(report);
+          }
         },
         onDismissed: (direction) {
-          _deleteReport(report, reportProvider);
+          if (direction == DismissDirection.endToStart) {
+            _deleteReport(report, reportProvider);
+          } else {
+            _archiveReport(report, reportProvider);
+          }
         },
         child: Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: ReportCardWidget(
             report: report,
             onStatusChanged: (newStatus) {
-              // Completed reports can't change status, but we keep this for consistency
               reportProvider.updateReportStatus(report.id, newStatus);
             },
+            showStatusDropdown: true, // FIXED: Always show status dropdown in Reports section
           ),
         ),
       );
     } else {
-      // For non-admin users on mobile, show the report card without swipe-to-delete
       return Padding(
         padding: const EdgeInsets.only(bottom: 12),
         child: ReportCardWidget(
           report: report,
           onStatusChanged: (newStatus) {
-            // Completed reports can't change status, but we keep this for consistency
             reportProvider.updateReportStatus(report.id, newStatus);
           },
+          showStatusDropdown: true, // FIXED: Show status dropdown for non-admin users too
         ),
       );
     }
   }
 
+  Widget _buildSwipeBackground(Color color, IconData icon, String text) {
+    return Container(
+      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.only(left: 20),
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.white, size: 30),
+          const SizedBox(width: 10),
+          Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<bool> _showArchiveConfirmationDialog(ReportModel report) async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(translate(context, 'archive_report')),
+        content: Text('${translate(context, 'archive_report_confirmation')} "${report.description}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(translate(context, 'cancel')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.orange),
+            child: Text(translate(context, 'archive')),
+          ),
+        ],
+      ),
+    ) ?? false;
+  }
+
+  void _archiveReport(ReportModel report, ReportProvider reportProvider) {
+    reportProvider.archiveReport(report.id);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${translate(context, 'report_archived')} "${report.description}"'),
+        backgroundColor: Colors.orange,
+        action: SnackBarAction(
+          label: translate(context, 'undo'),
+          textColor: Colors.white,
+          onPressed: () {
+            reportProvider.unarchiveReport(report.id);
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<bool> _showDeleteConfirmationDialog(ReportModel report) async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(translate(context, 'delete_report')),
+        content: Text('${translate(context, 'delete_report_confirmation')} "${report.description}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(translate(context, 'cancel')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: Text(translate(context, 'delete')),
+          ),
+        ],
+      ),
+    ) ?? false;
+  }
 
   void _showDeleteConfirmation(ReportModel report, ReportProvider reportProvider) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Report'),
-        content: Text('Are you sure you want to delete "${report.description}"? This action cannot be undone.'),
+        title: Text(translate(context, 'delete_report')),
+        content: Text('${translate(context, 'delete_report_confirmation')} "${report.description}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text(translate(context, 'cancel')),
           ),
           TextButton(
             onPressed: () {
@@ -250,7 +299,31 @@ class _CompletedReportsPageState extends State<CompletedReportsPage> {
               _deleteReport(report, reportProvider);
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: Text(translate(context, 'delete')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showArchiveConfirmation(ReportModel report, ReportProvider reportProvider) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(translate(context, 'archive_report')),
+        content: Text('${translate(context, 'archive_report_confirmation')} "${report.description}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(translate(context, 'cancel')),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _archiveReport(report, reportProvider);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.orange),
+            child: Text(translate(context, 'archive')),
           ),
         ],
       ),
@@ -261,18 +334,16 @@ class _CompletedReportsPageState extends State<CompletedReportsPage> {
     reportProvider.deleteReport(report.id);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Report "${report.description}" deleted'),
+        content: Text('${translate(context, 'report_deleted')} "${report.description}"'),
         backgroundColor: Colors.red,
         action: SnackBarAction(
-          label: 'Undo',
+          label: translate(context, 'undo'),
           textColor: Colors.white,
           onPressed: () {
-            // Note: Undo functionality would require more complex state management
-            // For now, we'll just show a message that undo is not available
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Undo not available - report has been permanently deleted'),
-                duration: Duration(seconds: 2),
+              SnackBar(
+                content: Text(translate(context, 'undo_not_available')),
+                duration: const Duration(seconds: 2),
               ),
             );
           },
@@ -281,38 +352,3 @@ class _CompletedReportsPageState extends State<CompletedReportsPage> {
     );
   }
 }
-
-//   void _showDeleteAllConfirmation(ReportProvider reportProvider) {
-//     final completedCount = reportProvider.completedReports.length;
-//     showDialog(
-//       context: context,
-//       builder: (context) => AlertDialog(
-//         title: const Text('Delete All Completed Reports'),
-//         content: Text('Are you sure you want to delete all $completedCount completed reports? This action cannot be undone.'),
-//         actions: [
-//           TextButton(
-//             onPressed: () => Navigator.of(context).pop(),
-//             child: const Text('Cancel'),
-//           ),
-//           TextButton(
-//             onPressed: () {
-//               Navigator.of(context).pop();
-//               // Delete all completed reports
-//               for (final report in reportProvider.completedReports) {
-//                 reportProvider.deleteReport(report.id);
-//               }
-//               ScaffoldMessenger.of(context).showSnackBar(
-//                 SnackBar(
-//                   content: Text('$completedCount completed reports deleted'),
-//                   backgroundColor: Colors.red,
-//                 ),
-//               );
-//             },
-//             style: TextButton.styleFrom(foregroundColor: Colors.red),
-//             child: const Text('Delete All'),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }

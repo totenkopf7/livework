@@ -5,6 +5,7 @@ import '../providers/report_provider.dart';
 import '../providers/site_provider.dart';
 import '../data/models/report_model.dart';
 import '../widgets/custom_map_widget.dart';
+import '../helpers/localization_helper.dart'; // ADDED
 
 class MapPage extends StatefulWidget {
   const MapPage({Key? key}) : super(key: key);
@@ -29,17 +30,17 @@ class _MapPageState extends State<MapPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Work Reports Map'),
+        title: Text(translate(context, 'map')), // UPDATED
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.secondary,
       ),
       body: Consumer2<ReportProvider, SiteProvider>(
         builder: (context, reportProvider, siteProvider, child) {
           if (siteProvider.currentSite == null) {
-            return const Center(
+            return Center(
               child: Text(
-                'No site selected, please configure a site to view reports',
-                style: TextStyle(fontSize: 16),
+                translate(context, 'no_site_selected'), // UPDATED
+                style: const TextStyle(fontSize: 16),
               ),
             );
           }
@@ -54,7 +55,7 @@ class _MapPageState extends State<MapPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Error: ${reportProvider.error}',
+                    '${translate(context, 'error')}: ${reportProvider.error}', // UPDATED
                     style: const TextStyle(color: Colors.red),
                   ),
                   const SizedBox(height: 16),
@@ -63,12 +64,15 @@ class _MapPageState extends State<MapPage> {
                       reportProvider.loadReports(
                           siteId: siteProvider.currentSite!.id);
                     },
-                    child: const Text('Retry'),
+                    child: Text(translate(context, 'retry')), // UPDATED
                   ),
                 ],
               ),
             );
           }
+
+          // FIXED: Filter out archived reports from the map
+          final activeReports = reportProvider.reports.where((report) => !report.isArchived).toList();
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(0),
@@ -78,12 +82,12 @@ class _MapPageState extends State<MapPage> {
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
-                    child: _buildMapView(reportProvider.reports),
+                    child: _buildMapView(activeReports), // UPDATED: Use filtered reports
                   ),
                 ),
                 const SizedBox(height: 16),
                 // Reports List
-                _buildReportsList(reportProvider.reports),
+                _buildReportsList(activeReports), // UPDATED: Use filtered reports
               ],
             ),
           );
@@ -93,16 +97,15 @@ class _MapPageState extends State<MapPage> {
   }
 
   Widget _buildMapView(List<ReportModel> reports) {
-    // Convert reports to map markers
-    final markers = reports.map((report) {
+    // Convert reports to map markers (filter out archived reports)
+    final markers = reports.where((report) => 
+        report.mapX != null && report.mapY != null && !report.isArchived).map((report) { // ADDED: !report.isArchived
       return MapMarker(
-        x: report.mapX ?? 0.1, // Default position if no map coordinates
+        x: report.mapX ?? 0.1,
         y: report.mapY ?? 0.1,
         color: _getStatusColor(report.status),
         icon: _getReportIcon(report.type),
         label: report.description,
-        // Add a reference to the report id for lookup
-        // We'll use label as a unique key for now, but id is better if available
       );
     }).toList();
 
@@ -110,7 +113,7 @@ class _MapPageState extends State<MapPage> {
       onLocationSelected: (x, y) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Tap on a marker to view report details'),
+            content: Text(translate(context, 'tap_marker_details')), // UPDATED
           ),
         );
       },
@@ -153,7 +156,7 @@ class _MapPageState extends State<MapPage> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Close'),
+                child: Text(translate(context, 'close')), // UPDATED
               ),
             ],
           ),
@@ -164,10 +167,10 @@ class _MapPageState extends State<MapPage> {
 
   Widget _buildReportsList(List<ReportModel> reports) {
     if (reports.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
-          'No reports found',
-          style: TextStyle(fontSize: 16, color: Colors.grey),
+          translate(context, 'no_reports_found'), // UPDATED
+          style: const TextStyle(fontSize: 16, color: Colors.grey),
         ),
       );
     }
@@ -185,7 +188,7 @@ class _MapPageState extends State<MapPage> {
           Padding(
             padding: EdgeInsets.all(16),
             child: Text(
-              'Work Reports (${reports.length})',
+              '${translate(context, 'work_reports')} (${reports.length})', // UPDATED
               style:  const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -296,11 +299,11 @@ class _MapPageState extends State<MapPage> {
   String _getStatusText(ReportStatus status) {
     switch (status) {
       case ReportStatus.inProgress:
-        return 'In Progress';
+        return translate(context, 'in_progress'); // UPDATED
       case ReportStatus.done:
-        return 'Completed';
+        return translate(context, 'completed'); // UPDATED
       case ReportStatus.hazard:
-        return 'Hazard';
+        return translate(context, 'hazard'); // UPDATED
     }
   }
 
@@ -312,30 +315,30 @@ class _MapPageState extends State<MapPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Report Details'),
+        title: Text(translate(context, 'report_details')), // UPDATED
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Type: ${report.type.name}'),
-            Text('Status: ${report.status.name}'),
-            Text('Zone: ${report.zone}'),
-            Text('Description: ${report.description}'),
+            Text('${translate(context, 'type')}: ${report.type.name}'), // UPDATED
+            Text('${translate(context, 'status')}: ${report.status.name}'), // UPDATED
+            Text('${translate(context, 'zone')}: ${report.zone}'), // UPDATED
+            Text('${translate(context, 'description')}: ${report.description}'), // UPDATED
             if (report.mapX != null && report.mapY != null) ...[
               const SizedBox(height: 8),
               Text(
-                  'Map Location: ${(report.mapX! * 100).toStringAsFixed(1)}%, ${(report.mapY! * 100).toStringAsFixed(1)}%'),
+                  '${translate(context, 'map_location')}: ${(report.mapX! * 100).toStringAsFixed(1)}%, ${(report.mapY! * 100).toStringAsFixed(1)}%'), // UPDATED
             ],
             if (report.reporterName != null) ...[
               const SizedBox(height: 8),
-              Text('Reporter: ${report.reporterName}'),
+              Text('${translate(context, 'reporter')}: ${report.reporterName}'), // UPDATED
             ],
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
+            child: Text(translate(context, 'close')), // UPDATED
           ),
         ],
       ),

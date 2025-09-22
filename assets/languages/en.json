@@ -75,5 +75,20 @@
   "please_select_zone": "Please select a zone",
   "please_enter_description": "Please enter a description",
   "ok": "OK",
-  "image_upload_errors": "Image Upload Errors"
+  "image_upload_errors": "Image Upload Errors",
+  "archived": "Archived",
+  "archive_report": "Archive Report",
+  "unarchive_report": "Unarchive Report",
+  "archived_reports": "Archived Reports",
+  "no_archived_reports": "No archived reports found",
+  "archive_report_confirmation": "Are you sure you want to archive the report",
+  "unarchive_report_confirmation": "Are you sure you want to unarchive the report",
+  "report_archived": "Report archived",
+  "report_unarchived": "Report unarchived",
+  "delete_all_reports": "Delete All Reports",
+  "delete_all_reports_confirmation": "Are you sure you want to delete all reports for",
+  "delete_all_reports_for_date": "Delete all reports for this date",
+  "reports_deleted_for_date": "Reports deleted for date",
+  "archived_on": "Archived on",
+  "this_action_cannot_be_undone": "This action cannot be undone"
 }

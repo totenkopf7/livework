@@ -7,6 +7,7 @@ import 'data/models/report_model.dart';
 import 'widgets/report_card_widget.dart';
 import 'widgets/filter_panel_widget.dart';
 import 'widgets/custom_map_widget.dart';
+import 'helpers/localization_helper.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({Key? key}) : super(key: key);
@@ -48,7 +49,7 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('LiveWork View Dashboard'),
+        title: Text(translate(context, 'dashboard')),
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.secondary,
         actions: [
@@ -57,13 +58,13 @@ class _DashboardPageState extends State<DashboardPage> {
             onPressed: () async {
               await _refreshReports();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Reports refreshed'),
-                  duration: Duration(seconds: 1),
+                SnackBar(
+                  content: Text(translate(context, 'reports_refreshed')),
+                  duration: const Duration(seconds: 1),
                 ),
               );
             },
-            tooltip: 'Refresh Reports',
+            tooltip: translate(context, 'refresh_reports'),
           ),
           IconButton(
             icon: Icon(_showMapView ? Icons.list : Icons.map),
@@ -72,29 +73,31 @@ class _DashboardPageState extends State<DashboardPage> {
                 _showMapView = !_showMapView;
               });
             },
-            tooltip: _showMapView ? 'Show List View' : 'Show Map View',
+            tooltip: _showMapView 
+                ? translate(context, 'show_list_view')
+                : translate(context, 'show_map_view'),
           ),
         ],
       ),
       body: Consumer2<ReportProvider, SiteProvider>(
         builder: (context, reportProvider, siteProvider, child) {
           if (siteProvider.currentSite == null) {
-            return const Center(
+            return Center(
               child: Text(
-                'No site selected, please configure a site to view reports',
-                style: TextStyle(fontSize: 16),
+                translate(context, 'no_site_selected'),
+                style: const TextStyle(fontSize: 16),
               ),
             );
           }
 
-         if (reportProvider.isLoading) {
-  return const Center(
-    child: CircularProgressIndicator(
-      valueColor: AlwaysStoppedAnimation<Color>(AppColors.background), // change color here
-      strokeWidth: 3, // optional: thickness of the progress circle
-    ),
-  );
-}
+          if (reportProvider.isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.background),
+                strokeWidth: 3,
+              ),
+            );
+          }
 
           if (reportProvider.error != null) {
             return Center(
@@ -102,25 +105,25 @@ class _DashboardPageState extends State<DashboardPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Error: ${reportProvider.error}',
+                    '${translate(context, 'error')}: ${reportProvider.error}',
                     style: const TextStyle(color: Colors.red),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _refreshReports,
-                    child: const Text('Retry'),
+                    child: Text(translate(context, 'retry')),
                   ),
                 ],
               ),
             );
           }
 
-          // Only show active reports (not completed) on dashboard
+          // Only show active reports (not completed and not archived) on dashboard
           final filteredReports = reportProvider.applyFilters(
             type: _selectedType,
             status: _selectedStatus,
-          ).where((report) => report.status != ReportStatus.done).toList();
+          ).where((report) => report.status != ReportStatus.done && !report.isArchived).toList();
 
           return Column(
             children: [
@@ -158,10 +161,10 @@ class _DashboardPageState extends State<DashboardPage> {
           physics: const AlwaysScrollableScrollPhysics(),
           child: SizedBox(
             height: MediaQuery.of(context).size.height * 0.8,
-            child: const Center(
+            child: Center(
               child: Text(
-                'No reports found\nPull down to refresh',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+                translate(context, 'no_reports_found'),
+                style: const TextStyle(fontSize: 16, color: Colors.grey),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -185,6 +188,8 @@ class _DashboardPageState extends State<DashboardPage> {
                 Provider.of<ReportProvider>(context, listen: false)
                     .updateReportStatus(report.id, newStatus);
               },
+              showCompleteButton: report.type == ReportType.work,
+              showControlledButton: report.type == ReportType.hazard,
             ),
           );
         },
@@ -193,15 +198,15 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildMapView(List<ReportModel> reports) {
-    // Filter out reports without map coordinates
+    // Filter out reports without map coordinates AND archived reports
     final reportsWithLocation = reports.where((report) => 
-        report.mapX != null && report.mapY != null).toList();
+        report.mapX != null && report.mapY != null && !report.isArchived).toList(); // ADDED: !report.isArchived
 
     if (reportsWithLocation.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
-          'No reports with map locations\nSwitch to list view or create new reports with locations',
-          style: TextStyle(fontSize: 16, color: Colors.grey),
+          translate(context, 'no_reports_with_locations'),
+          style: const TextStyle(fontSize: 16, color: Colors.grey),
           textAlign: TextAlign.center,
         ),
       );
@@ -222,7 +227,7 @@ class _DashboardPageState extends State<DashboardPage> {
         // Show coordinates when tapping on map
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Selected: ${(x * 100).toStringAsFixed(1)}%, ${(y * 100).toStringAsFixed(1)}%'),
+            content: Text('${translate(context, 'selected')}: ${(x * 100).toStringAsFixed(1)}%, ${(y * 100).toStringAsFixed(1)}%'),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -266,26 +271,25 @@ class _DashboardPageState extends State<DashboardPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Report Details'),
+        title: Text(translate(context, 'report_details')),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Type: ${report.type.toString().split('.').last}'),
-              Text('Status: ${report.status.toString().split('.').last}'),
-              Text('Zone: ${report.zone}'),
+              Text('${translate(context, 'type')}: ${report.type.toString().split('.').last}'),
+              Text('${translate(context, 'status')}: ${report.status.toString().split('.').last}'),
+              Text('${translate(context, 'zone')}: ${report.zone}'),
               const SizedBox(height: 8),
-              const Text('Description:', style: TextStyle(fontWeight: FontWeight.bold)),
+              Text('${translate(context, 'description')}:', style: const TextStyle(fontWeight: FontWeight.bold)),
               Text(report.description),
               const SizedBox(height: 8),
               if (report.mapX != null && report.mapY != null)
-                Text('Map Location: ${(report.mapX! * 100).toStringAsFixed(1)}%, ${(report.mapY! * 100).toStringAsFixed(1)}%'),
-                // Removed createdAt as it does not exist on ReportModel
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Close'),
-                ),
+                Text('${translate(context, 'map_location')}: ${(report.mapX! * 100).toStringAsFixed(1)}%, ${(report.mapY! * 100).toStringAsFixed(1)}%'),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(translate(context, 'close')),
+              ),
             ],
           ),
         ),

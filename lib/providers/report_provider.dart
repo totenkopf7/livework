@@ -2,20 +2,14 @@ import 'package:flutter/foundation.dart';
 import '../data/models/report_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
-import 'package:livework_view/providers/auth_provider.dart'
-    as livework_auth; // Add alias
+import 'package:livework_view/providers/auth_provider.dart' as livework_auth;
 
 class ReportProvider with ChangeNotifier {
   List<ReportModel> _reports = [];
   List<ReportModel> _pendingReports = [];
   bool _isLoading = false;
   String? _error;
-  livework_auth.AppUser? _currentUser; // Use alias
-
-  // Add a constructor
-  ReportProvider() {
-    loadReports();
-  }
+  livework_auth.AppUser? _currentUser;
 
   StreamSubscription<QuerySnapshot>? _reportSubscription;
 
@@ -24,16 +18,45 @@ class ReportProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
+  List<ReportModel> get archivedReports =>
+      _reports.where((report) => report.isArchived).toList();
+
+  Map<String, List<ReportModel>> get archivedReportsByDate {
+    final Map<String, List<ReportModel>> grouped = {};
+    
+    for (final report in archivedReports) {
+      // FIXED: Use original creation date (timestamp) instead of archive date
+      final dateKey = _formatDateKey(report.timestamp);
+      if (!grouped.containsKey(dateKey)) {
+        grouped[dateKey] = [];
+      }
+      grouped[dateKey]!.add(report);
+    }
+    
+    final sortedKeys = grouped.keys.toList()
+      ..sort((a, b) => b.compareTo(a));
+    
+    final sortedMap = <String, List<ReportModel>>{};
+    for (final key in sortedKeys) {
+      sortedMap[key] = grouped[key]!;
+    }
+    
+    return sortedMap;
+  }
+
   void setCurrentUser(livework_auth.AppUser? user) {
-    // Use alias
     _currentUser = user;
   }
 
   List<ReportModel> get activeReports =>
-      _reports.where((report) => report.status != ReportStatus.done).toList();
+      _reports.where((report) => report.status != ReportStatus.done && !report.isArchived).toList();
 
   List<ReportModel> get completedReports =>
-      _reports.where((report) => report.status == ReportStatus.done).toList();
+      _reports.where((report) => report.status == ReportStatus.done && !report.isArchived).toList();
+
+  ReportProvider() {
+    loadReports();
+  }
 
   Future<void> loadReports({String? siteId, bool forceRefresh = false}) async {
     _isLoading = true;
@@ -136,7 +159,7 @@ class ReportProvider with ChangeNotifier {
         description: 'Electrical maintenance in building A',
         photoUrls: [],
         status: ReportStatus.inProgress,
-        timestamp: DateTime.now().subtract(const Duration(hours: 2)),
+        timestamp: DateTime.now().subtract(const Duration(days: 3)), // Different date for testing
         reporterName: 'John Doe',
         reporterId: 'user_123',
         latitude: 29.7604,
@@ -150,7 +173,7 @@ class ReportProvider with ChangeNotifier {
         description: 'Slippery floor near entrance',
         photoUrls: [],
         status: ReportStatus.hazard,
-        timestamp: DateTime.now().subtract(const Duration(hours: 1)),
+        timestamp: DateTime.now().subtract(const Duration(days: 2)), // Different date for testing
         reporterName: 'Jane Smith',
         reporterId: 'user_456',
         latitude: 29.7605,
@@ -164,7 +187,7 @@ class ReportProvider with ChangeNotifier {
         description: 'Completed plumbing repair',
         photoUrls: [],
         status: ReportStatus.done,
-        timestamp: DateTime.now().subtract(const Duration(hours: 3)),
+        timestamp: DateTime.now().subtract(const Duration(days: 1)), // Different date for testing
         reporterName: 'Bob Wilson',
         reporterId: 'user_789',
         latitude: 29.7606,
@@ -276,6 +299,123 @@ class ReportProvider with ChangeNotifier {
       _error = 'Failed to delete report: $e';
       notifyListeners();
     }
+  }
+
+  Future<void> archiveReport(String reportId) async {
+    try {
+      final reportIndex = _reports.indexWhere((report) => report.id == reportId);
+      if (reportIndex != -1) {
+        final updatedReport = _reports[reportIndex].copyWith(
+          isArchived: true,
+          archivedDate: DateTime.now(), // Still store archive date for reference
+        );
+        _reports[reportIndex] = updatedReport;
+
+        try {
+          await FirebaseFirestore.instance
+              .collection('reports')
+              .doc(reportId)
+              .update({
+                'isArchived': true,
+                'archivedDate': Timestamp.fromDate(DateTime.now()),
+              });
+          print('Report archived in Firestore: $reportId');
+        } catch (e) {
+          print('Error archiving report in Firestore: $e');
+          _error = 'Failed to archive report in cloud: $e';
+        }
+
+        notifyListeners();
+      }
+    } catch (e) {
+      _error = 'Failed to archive report: $e';
+      notifyListeners();
+    }
+  }
+
+  Future<void> unarchiveReport(String reportId) async {
+    try {
+      final reportIndex = _reports.indexWhere((report) => report.id == reportId);
+      if (reportIndex != -1) {
+        final updatedReport = _reports[reportIndex].copyWith(
+          isArchived: false,
+          archivedDate: null,
+        );
+        _reports[reportIndex] = updatedReport;
+
+        try {
+          await FirebaseFirestore.instance
+              .collection('reports')
+              .doc(reportId)
+              .update({
+                'isArchived': false,
+                'archivedDate': null,
+              });
+          print('Report unarchived in Firestore: $reportId');
+        } catch (e) {
+          print('Error unarchiving report in Firestore: $e');
+          _error = 'Failed to unarchive report in cloud: $e';
+        }
+
+        notifyListeners();
+      }
+    } catch (e) {
+      _error = 'Failed to unarchive report: $e';
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteArchivedReport(String reportId) async {
+    try {
+      try {
+        await FirebaseFirestore.instance
+            .collection('reports')
+            .doc(reportId)
+            .delete();
+        print('Archived report deleted from Firestore: $reportId');
+      } catch (e) {
+        print('Error deleting archived report from Firestore: $e');
+        _error = 'Failed to delete archived report from cloud: $e';
+        notifyListeners();
+        return;
+      }
+
+      _reports.removeWhere((report) => report.id == reportId);
+      notifyListeners();
+    } catch (e) {
+      _error = 'Failed to delete archived report: $e';
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteArchivedReportsByDate(String dateKey) async {
+    try {
+      final reportsToDelete = archivedReportsByDate[dateKey] ?? [];
+      final reportIds = reportsToDelete.map((report) => report.id).toList();
+      
+      for (final reportId in reportIds) {
+        try {
+          await FirebaseFirestore.instance
+              .collection('reports')
+              .doc(reportId)
+              .delete();
+          print('Archived report deleted from Firestore: $reportId');
+        } catch (e) {
+          print('Error deleting archived report from Firestore: $e');
+          _error = 'Failed to delete some archived reports from cloud: $e';
+        }
+      }
+
+      _reports.removeWhere((report) => reportIds.contains(report.id));
+      notifyListeners();
+    } catch (e) {
+      _error = 'Failed to delete archived reports: $e';
+      notifyListeners();
+    }
+  }
+
+  String _formatDateKey(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
   void addReport(ReportModel report) {
