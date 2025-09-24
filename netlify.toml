@@ -1,13 +1,7 @@
+
 [build]
   command = "flutter build web --release"
+  # Remove publish directive entirely - let Netlify auto-detect
 
 [build.environment]
   FLUTTER_VERSION = "3.13.2"
-
-[context.production]
-  publish = "build/web"
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
