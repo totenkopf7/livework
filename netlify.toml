@@ -1,9 +1,11 @@
 [build]
-  publish = "build/web"
   command = "flutter build web --release"
 
 [build.environment]
   FLUTTER_VERSION = "3.13.2"
+
+[context.production]
+  publish = "build/web"
 
 [[redirects]]
   from = "/*"
