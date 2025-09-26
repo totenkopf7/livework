@@ -88,7 +88,12 @@
   "delete_all_reports": "Delete All Reports",
   "delete_all_reports_confirmation": "Are you sure you want to delete all reports for",
   "delete_all_reports_for_date": "Delete all reports for this date",
+  "delete_all": "Delete All",
   "reports_deleted_for_date": "Reports deleted for date",
   "archived_on": "Archived on",
-  "this_action_cannot_be_undone": "This action cannot be undone"
+  "this_action_cannot_be_undone": "This action cannot be undone",
+  "no_reports_found": "No reports found",
+  "Tap_if_controlled": "Tap if controlled",
+  "tasks": "Tasks",
+  "hazards": "Hazards"
 }

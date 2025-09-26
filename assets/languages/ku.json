@@ -93,5 +93,9 @@
   "Outside Generators": "موەلیدە ",
   "Gabban": "گەبان",
   "Boilers": "بویلەر",
-  "Steam Boilers": "ستیم بویلەر "
+  "Steam Boilers": "ستیم بویلەر ",
+    "no_reports_found": "چ کار نەهاتینە تومار کرن",
+  "Tap_if_controlled": "    تاپ بکە ئەگەر هاتە کونترول کرن",
+  "Tasks": " کار",
+   "delete_all": "ژێبرنا هەمی ریپورتا"
 }

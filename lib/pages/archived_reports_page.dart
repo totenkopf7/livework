@@ -29,7 +29,8 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<livework_auth.LiveWorkAuthProvider>(context);
+    final authProvider =
+        Provider.of<livework_auth.LiveWorkAuthProvider>(context);
     final isAdmin = authProvider.isAdmin;
 
     return Scaffold(
@@ -42,10 +43,13 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage> {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
-              final siteProvider = Provider.of<SiteProvider>(context, listen: false);
-              final reportProvider = Provider.of<ReportProvider>(context, listen: false);
+              final siteProvider =
+                  Provider.of<SiteProvider>(context, listen: false);
+              final reportProvider =
+                  Provider.of<ReportProvider>(context, listen: false);
               if (siteProvider.currentSite != null) {
-                reportProvider.refreshReports(siteId: siteProvider.currentSite!.id);
+                reportProvider.refreshReports(
+                    siteId: siteProvider.currentSite!.id);
               }
             },
             tooltip: translate(context, 'refresh_reports'),
@@ -79,7 +83,8 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage> {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {
-                      reportProvider.loadReports(siteId: siteProvider.currentSite!.id);
+                      reportProvider.loadReports(
+                          siteId: siteProvider.currentSite!.id);
                     },
                     child: Text(translate(context, 'retry')),
                   ),
@@ -90,7 +95,8 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage> {
 
           final archivedReportsByDate = reportProvider.archivedReportsByDate;
 
-          return _buildArchivedReportsList(archivedReportsByDate, reportProvider, isAdmin);
+          return _buildArchivedReportsList(
+              archivedReportsByDate, reportProvider, isAdmin);
         },
       ),
     );
@@ -103,9 +109,11 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage> {
     if (archivedReportsByDate.isEmpty) {
       return RefreshIndicator(
         onRefresh: () async {
-          final siteProvider = Provider.of<SiteProvider>(context, listen: false);
+          final siteProvider =
+              Provider.of<SiteProvider>(context, listen: false);
           if (siteProvider.currentSite != null) {
-            await reportProvider.refreshReports(siteId: siteProvider.currentSite!.id);
+            await reportProvider.refreshReports(
+                siteId: siteProvider.currentSite!.id);
           }
         },
         child: Center(
@@ -122,7 +130,8 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage> {
       onRefresh: () async {
         final siteProvider = Provider.of<SiteProvider>(context, listen: false);
         if (siteProvider.currentSite != null) {
-          await reportProvider.refreshReports(siteId: siteProvider.currentSite!.id);
+          await reportProvider.refreshReports(
+              siteId: siteProvider.currentSite!.id);
         }
       },
       child: ListView.builder(
@@ -131,7 +140,7 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage> {
         itemBuilder: (context, index) {
           final dateKey = archivedReportsByDate.keys.elementAt(index);
           final reports = archivedReportsByDate[dateKey]!;
-          
+
           return _buildDateSection(dateKey, reports, reportProvider, isAdmin);
         },
       ),
@@ -163,7 +172,7 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage> {
                       Text(
                         _formatDateHeader(dateKey),
                         style: const TextStyle(
-                          fontSize: 18,
+                          fontSize: 25,
                           fontWeight: FontWeight.bold,
                           color: Colors.orange,
                         ),
@@ -172,7 +181,7 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${reports.length} ${translate(context, 'reports')}',
+                        '${reports.length} ${translate(context, 'tasks')}',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey[600],
@@ -184,7 +193,8 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage> {
                 if (isAdmin) ...[
                   IconButton(
                     icon: const Icon(Icons.delete_forever, color: Colors.red),
-                    onPressed: () => _showDeleteDateConfirmation(dateKey, reports, reportProvider),
+                    onPressed: () => _showDeleteDateConfirmation(
+                        dateKey, reports, reportProvider),
                     tooltip: translate(context, 'delete_all_reports_for_date'),
                   ),
                 ],
@@ -192,9 +202,10 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage> {
             ),
             const SizedBox(height: 12),
             Column(
-              children: reports.map((report) => 
-                _buildArchivedReportCard(report, reportProvider, isAdmin)
-              ).toList(),
+              children: reports
+                  .map((report) =>
+                      _buildArchivedReportCard(report, reportProvider, isAdmin))
+                  .toList(),
             ),
           ],
         ),
@@ -202,7 +213,8 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage> {
     );
   }
 
-  Widget _buildArchivedReportCard(ReportModel report, ReportProvider reportProvider, bool isAdmin) {
+  Widget _buildArchivedReportCard(
+      ReportModel report, ReportProvider reportProvider, bool isAdmin) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: ReportCardWidget(
@@ -226,31 +238,41 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage> {
         final month = int.parse(parts[1]);
         final day = int.parse(parts[2]);
         final date = DateTime(year, month, day);
-        
+
         // Format: 22 September 2025
         final months = [
-          'January', 'February', 'March', 'April', 'May', 'June',
-          'July', 'August', 'September', 'October', 'November', 'December'
+          'January',
+          'February',
+          'March',
+          'April',
+          'May',
+          'June',
+          'July',
+          'August',
+          'September',
+          'October',
+          'November',
+          'December'
         ];
-        
+
         return '${date.day} ${months[date.month - 1]} ${date.year}';
       }
     } catch (e) {
       print('Error formatting date: $e');
     }
-    
+
     return dateKey;
   }
 
-  void _showDeleteDateConfirmation(String dateKey, List<ReportModel> reports, ReportProvider reportProvider) {
+  void _showDeleteDateConfirmation(String dateKey, List<ReportModel> reports,
+      ReportProvider reportProvider) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(translate(context, 'delete_all_reports')),
         content: Text(
-          '${translate(context, 'delete_all_reports_confirmation')} ${_formatDateHeader(dateKey)}? '
-          '${translate(context, 'this_action_cannot_be_undone')}'
-        ),
+            '${translate(context, 'delete_all_reports_confirmation')} ${_formatDateHeader(dateKey)}? '
+            '${translate(context, 'this_action_cannot_be_undone')}'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -269,22 +291,26 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage> {
     );
   }
 
-  void _deleteReportsByDate(String dateKey, List<ReportModel> reports, ReportProvider reportProvider) {
+  void _deleteReportsByDate(String dateKey, List<ReportModel> reports,
+      ReportProvider reportProvider) {
     reportProvider.deleteArchivedReportsByDate(dateKey);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${translate(context, 'reports_deleted_for_date')} ${_formatDateHeader(dateKey)}'),
+        content: Text(
+            '${translate(context, 'reports_deleted_for_date')} ${_formatDateHeader(dateKey)}'),
         backgroundColor: Colors.red,
       ),
     );
   }
 
-  void _showDeleteConfirmation(ReportModel report, ReportProvider reportProvider) {
+  void _showDeleteConfirmation(
+      ReportModel report, ReportProvider reportProvider) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(translate(context, 'delete_report')),
-        content: Text('${translate(context, 'delete_report_confirmation')} "${report.description}"?'),
+        content: Text(
+            '${translate(context, 'delete_report_confirmation')} "${report.description}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -303,12 +329,14 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage> {
     );
   }
 
-  void _showUnarchiveConfirmation(ReportModel report, ReportProvider reportProvider) {
+  void _showUnarchiveConfirmation(
+      ReportModel report, ReportProvider reportProvider) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(translate(context, 'unarchive_report')),
-        content: Text('${translate(context, 'unarchive_report_confirmation')} "${report.description}"?'),
+        content: Text(
+            '${translate(context, 'unarchive_report_confirmation')} "${report.description}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -331,7 +359,8 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage> {
     reportProvider.deleteArchivedReport(report.id);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${translate(context, 'report_deleted')} "${report.description}"'),
+        content: Text(
+            '${translate(context, 'report_deleted')} "${report.description}"'),
         backgroundColor: Colors.red,
       ),
     );
@@ -341,7 +370,8 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage> {
     reportProvider.unarchiveReport(report.id);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${translate(context, 'report_unarchived')} "${report.description}"'),
+        content: Text(
+            '${translate(context, 'report_unarchived')} "${report.description}"'),
         backgroundColor: Colors.green,
       ),
     );

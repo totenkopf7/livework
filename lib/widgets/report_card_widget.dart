@@ -187,7 +187,6 @@ class ReportCardWidget extends StatelessWidget {
             ],
             if (isAdmin) ...[
               const SizedBox(height: 12),
-              
               if (showCompleteButton && report.type == ReportType.work)
                 _buildActionButton(
                   context,
@@ -198,7 +197,6 @@ class ReportCardWidget extends StatelessWidget {
                     onStatusChanged(ReportStatus.done);
                   },
                 ),
-              
               if (showControlledButton && report.type == ReportType.hazard)
                 _buildActionButton(
                   context,
@@ -209,8 +207,7 @@ class ReportCardWidget extends StatelessWidget {
                     onStatusChanged(ReportStatus.done);
                   },
                 ),
-              
-              if (showArchiveButton && onArchive != null) 
+              if (showArchiveButton && onArchive != null)
                 _buildActionButton(
                   context,
                   icon: Icons.archive,
@@ -218,7 +215,6 @@ class ReportCardWidget extends StatelessWidget {
                   color: Colors.orange,
                   onPressed: onArchive!,
                 ),
-              
               if (showUnarchiveButton && onUnarchive != null)
                 _buildActionButton(
                   context,
@@ -227,7 +223,6 @@ class ReportCardWidget extends StatelessWidget {
                   color: Colors.green,
                   onPressed: onUnarchive!,
                 ),
-              
               if (showDeleteButton && onDelete != null)
                 _buildActionButton(
                   context,
@@ -236,7 +231,6 @@ class ReportCardWidget extends StatelessWidget {
                   color: Colors.red,
                   onPressed: onDelete!,
                 ),
-              
               if (showStatusDropdown && !report.isArchived)
                 Row(
                   children: [
@@ -275,7 +269,8 @@ class ReportCardWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButton(BuildContext context, {
+  Widget _buildActionButton(
+    BuildContext context, {
     required IconData icon,
     required String text,
     required Color color,
