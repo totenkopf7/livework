@@ -29,7 +29,7 @@ class _MapPageState extends State<MapPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      // backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(translate(context, 'map')), // UPDATED
         backgroundColor: AppColors.background,
@@ -73,7 +73,9 @@ class _MapPageState extends State<MapPage> {
           }
 
           // FIXED: Filter out archived reports from the map
-          final activeReports = reportProvider.reports.where((report) => !report.isArchived).toList();
+          final activeReports = reportProvider.reports
+              .where((report) => !report.isArchived)
+              .toList();
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(0),
@@ -83,12 +85,14 @@ class _MapPageState extends State<MapPage> {
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
-                    child: _buildMapView(activeReports), // UPDATED: Use filtered reports
+                    child: _buildMapView(
+                        activeReports), // UPDATED: Use filtered reports
                   ),
                 ),
                 const SizedBox(height: 16),
                 // Reports List
-                _buildReportsList(activeReports), // UPDATED: Use filtered reports
+                _buildReportsList(
+                    activeReports), // UPDATED: Use filtered reports
               ],
             ),
           );
@@ -99,8 +103,11 @@ class _MapPageState extends State<MapPage> {
 
   Widget _buildMapView(List<ReportModel> reports) {
     // Convert reports to map markers (filter out archived reports)
-    final markers = reports.where((report) => 
-        report.mapX != null && report.mapY != null && !report.isArchived).map((report) { // ADDED: !report.isArchived
+    final markers = reports
+        .where((report) =>
+            report.mapX != null && report.mapY != null && !report.isArchived)
+        .map((report) {
+      // ADDED: !report.isArchived
       return MapMarker(
         x: report.mapX ?? 0.1,
         y: report.mapY ?? 0.1,
@@ -123,9 +130,10 @@ class _MapPageState extends State<MapPage> {
       onMarkerTap: (marker) {
         // Find the report by matching label (description) and coordinates
         final report = reports.firstWhere(
-          (r) => r.description == marker.label &&
-                  ((r.mapX ?? 0.1) - marker.x).abs() < 0.0001 &&
-                  ((r.mapY ?? 0.1) - marker.y).abs() < 0.0001,
+          (r) =>
+              r.description == marker.label &&
+              ((r.mapX ?? 0.1) - marker.x).abs() < 0.0001 &&
+              ((r.mapY ?? 0.1) - marker.y).abs() < 0.0001,
           orElse: () => reports.first,
         );
         showDialog(
@@ -190,7 +198,7 @@ class _MapPageState extends State<MapPage> {
             padding: EdgeInsets.all(16),
             child: Text(
               '${translate(context, 'work_reports')} (${reports.length})', // UPDATED
-              style:  const TextStyle(
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -321,10 +329,13 @@ class _MapPageState extends State<MapPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('${translate(context, 'type')}: ${report.type.name}'), // UPDATED
-            Text('${translate(context, 'status')}: ${report.status.name}'), // UPDATED
+            Text(
+                '${translate(context, 'type')}: ${report.type.name}'), // UPDATED
+            Text(
+                '${translate(context, 'status')}: ${report.status.name}'), // UPDATED
             Text('${translate(context, 'zone')}: ${report.zone}'), // UPDATED
-            Text('${translate(context, 'description')}: ${report.description}'), // UPDATED
+            Text(
+                '${translate(context, 'description')}: ${report.description}'), // UPDATED
             if (report.mapX != null && report.mapY != null) ...[
               const SizedBox(height: 8),
               Text(
@@ -332,7 +343,8 @@ class _MapPageState extends State<MapPage> {
             ],
             if (report.reporterName != null) ...[
               const SizedBox(height: 8),
-              Text('${translate(context, 'reporter')}: ${report.reporterName}'), // UPDATED
+              Text(
+                  '${translate(context, 'reporter')}: ${report.reporterName}'), // UPDATED
             ],
           ],
         ),

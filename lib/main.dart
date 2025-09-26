@@ -44,7 +44,7 @@ void main() async {
   // ]);
 
   // Enable full screen for PWA
-  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  // await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
   runApp(const LiveWorkViewApp());
 }
@@ -93,17 +93,17 @@ class LiveWorkViewApp extends StatelessWidget {
                 backgroundColor: AppColors.background,
                 foregroundColor: AppColors.secondary,
                 elevation: 0,
-                systemOverlayStyle: SystemUiOverlayStyle(
-                  statusBarColor:
-                      Colors.transparent, // Important for edge-to-edge
-                  statusBarIconBrightness: Brightness.light,
-                  statusBarBrightness: Brightness.dark,
-                  systemNavigationBarColor: Color(0xFF1f1e1e),
-                  systemNavigationBarIconBrightness: Brightness.light,
-                ),
+                // systemOverlayStyle: SystemUiOverlayStyle(
+                //   statusBarColor:
+                //       Colors.transparent, // Important for edge-to-edge
+                //   statusBarIconBrightness: Brightness.light,
+                //   statusBarBrightness: Brightness.dark,
+                //   systemNavigationBarColor: Color(0xFF1f1e1e),
+                //   systemNavigationBarIconBrightness: Brightness.light,
+                // ),
                 iconTheme: IconThemeData(color: Colors.white),
               ),
-              iconTheme: const IconThemeData(color: Colors.black),
+              // iconTheme: const IconThemeData(color: Colors.black),
               cardTheme: CardTheme(
                 elevation: 2,
                 shape: RoundedRectangleBorder(

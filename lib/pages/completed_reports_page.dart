@@ -30,11 +30,12 @@ class _CompletedReportsPageState extends State<CompletedReportsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<livework_auth.LiveWorkAuthProvider>(context);
+    final authProvider =
+        Provider.of<livework_auth.LiveWorkAuthProvider>(context);
     final isAdmin = authProvider.isAdmin;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      // backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(translate(context, 'completed_reports')),
         backgroundColor: AppColors.background,
@@ -43,10 +44,13 @@ class _CompletedReportsPageState extends State<CompletedReportsPage> {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
-              final siteProvider = Provider.of<SiteProvider>(context, listen: false);
-              final reportProvider = Provider.of<ReportProvider>(context, listen: false);
+              final siteProvider =
+                  Provider.of<SiteProvider>(context, listen: false);
+              final reportProvider =
+                  Provider.of<ReportProvider>(context, listen: false);
               if (siteProvider.currentSite != null) {
-                reportProvider.refreshReports(siteId: siteProvider.currentSite!.id);
+                reportProvider.refreshReports(
+                    siteId: siteProvider.currentSite!.id);
               }
             },
             tooltip: translate(context, 'refresh_reports'),
@@ -98,13 +102,16 @@ class _CompletedReportsPageState extends State<CompletedReportsPage> {
     );
   }
 
-  Widget _buildReportsList(List<ReportModel> reports, ReportProvider reportProvider, bool isAdmin) {
+  Widget _buildReportsList(
+      List<ReportModel> reports, ReportProvider reportProvider, bool isAdmin) {
     if (reports.isEmpty) {
       return RefreshIndicator(
         onRefresh: () async {
-          final siteProvider = Provider.of<SiteProvider>(context, listen: false);
+          final siteProvider =
+              Provider.of<SiteProvider>(context, listen: false);
           if (siteProvider.currentSite != null) {
-            await reportProvider.refreshReports(siteId: siteProvider.currentSite!.id);
+            await reportProvider.refreshReports(
+                siteId: siteProvider.currentSite!.id);
           }
         },
         child: Center(
@@ -121,7 +128,8 @@ class _CompletedReportsPageState extends State<CompletedReportsPage> {
       onRefresh: () async {
         final siteProvider = Provider.of<SiteProvider>(context, listen: false);
         if (siteProvider.currentSite != null) {
-          await reportProvider.refreshReports(siteId: siteProvider.currentSite!.id);
+          await reportProvider.refreshReports(
+              siteId: siteProvider.currentSite!.id);
         }
       },
       child: ListView.builder(
@@ -135,7 +143,8 @@ class _CompletedReportsPageState extends State<CompletedReportsPage> {
     );
   }
 
-  Widget _buildDismissibleReportCard(ReportModel report, ReportProvider reportProvider, bool isAdmin) {
+  Widget _buildDismissibleReportCard(
+      ReportModel report, ReportProvider reportProvider, bool isAdmin) {
     if (kIsWeb && isAdmin) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 12),
@@ -146,7 +155,8 @@ class _CompletedReportsPageState extends State<CompletedReportsPage> {
           },
           showDeleteButton: isAdmin,
           showArchiveButton: isAdmin,
-          showStatusDropdown: true, // FIXED: Always show status dropdown in Reports section
+          showStatusDropdown:
+              true, // FIXED: Always show status dropdown in Reports section
           onDelete: () => _showDeleteConfirmation(report, reportProvider),
           onArchive: () => _showArchiveConfirmation(report, reportProvider),
         ),
@@ -157,8 +167,10 @@ class _CompletedReportsPageState extends State<CompletedReportsPage> {
       return Dismissible(
         key: Key('${report.id}_completed'),
         direction: DismissDirection.horizontal,
-        background: _buildSwipeBackground(Colors.orange, Icons.archive, translate(context, 'archive')),
-        secondaryBackground: _buildSwipeBackground(Colors.red, Icons.delete, translate(context, 'delete')),
+        background: _buildSwipeBackground(
+            Colors.orange, Icons.archive, translate(context, 'archive')),
+        secondaryBackground: _buildSwipeBackground(
+            Colors.red, Icons.delete, translate(context, 'delete')),
         confirmDismiss: (direction) async {
           if (direction == DismissDirection.endToStart) {
             return await _showDeleteConfirmationDialog(report);
@@ -180,7 +192,8 @@ class _CompletedReportsPageState extends State<CompletedReportsPage> {
             onStatusChanged: (newStatus) {
               reportProvider.updateReportStatus(report.id, newStatus);
             },
-            showStatusDropdown: true, // FIXED: Always show status dropdown in Reports section
+            showStatusDropdown:
+                true, // FIXED: Always show status dropdown in Reports section
           ),
         ),
       );
@@ -192,7 +205,8 @@ class _CompletedReportsPageState extends State<CompletedReportsPage> {
           onStatusChanged: (newStatus) {
             reportProvider.updateReportStatus(report.id, newStatus);
           },
-          showStatusDropdown: true, // FIXED: Show status dropdown for non-admin users too
+          showStatusDropdown:
+              true, // FIXED: Show status dropdown for non-admin users too
         ),
       );
     }
@@ -226,30 +240,33 @@ class _CompletedReportsPageState extends State<CompletedReportsPage> {
 
   Future<bool> _showArchiveConfirmationDialog(ReportModel report) async {
     return await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(translate(context, 'archive_report')),
-        content: Text('${translate(context, 'archive_report_confirmation')} "${report.description}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(translate(context, 'cancel')),
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(translate(context, 'archive_report')),
+            content: Text(
+                '${translate(context, 'archive_report_confirmation')} "${report.description}"?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(translate(context, 'cancel')),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: TextButton.styleFrom(foregroundColor: Colors.orange),
+                child: Text(translate(context, 'archive')),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.orange),
-            child: Text(translate(context, 'archive')),
-          ),
-        ],
-      ),
-    ) ?? false;
+        ) ??
+        false;
   }
 
   void _archiveReport(ReportModel report, ReportProvider reportProvider) {
     reportProvider.archiveReport(report.id);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${translate(context, 'report_archived')} "${report.description}"'),
+        content: Text(
+            '${translate(context, 'report_archived')} "${report.description}"'),
         backgroundColor: Colors.orange,
         action: SnackBarAction(
           label: translate(context, 'undo'),
@@ -264,31 +281,35 @@ class _CompletedReportsPageState extends State<CompletedReportsPage> {
 
   Future<bool> _showDeleteConfirmationDialog(ReportModel report) async {
     return await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(translate(context, 'delete_report')),
-        content: Text('${translate(context, 'delete_report_confirmation')} "${report.description}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(translate(context, 'cancel')),
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(translate(context, 'delete_report')),
+            content: Text(
+                '${translate(context, 'delete_report_confirmation')} "${report.description}"?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(translate(context, 'cancel')),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: Text(translate(context, 'delete')),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: Text(translate(context, 'delete')),
-          ),
-        ],
-      ),
-    ) ?? false;
+        ) ??
+        false;
   }
 
-  void _showDeleteConfirmation(ReportModel report, ReportProvider reportProvider) {
+  void _showDeleteConfirmation(
+      ReportModel report, ReportProvider reportProvider) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(translate(context, 'delete_report')),
-        content: Text('${translate(context, 'delete_report_confirmation')} "${report.description}"?'),
+        content: Text(
+            '${translate(context, 'delete_report_confirmation')} "${report.description}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -307,12 +328,14 @@ class _CompletedReportsPageState extends State<CompletedReportsPage> {
     );
   }
 
-  void _showArchiveConfirmation(ReportModel report, ReportProvider reportProvider) {
+  void _showArchiveConfirmation(
+      ReportModel report, ReportProvider reportProvider) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(translate(context, 'archive_report')),
-        content: Text('${translate(context, 'archive_report_confirmation')} "${report.description}"?'),
+        content: Text(
+            '${translate(context, 'archive_report_confirmation')} "${report.description}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -335,7 +358,8 @@ class _CompletedReportsPageState extends State<CompletedReportsPage> {
     reportProvider.deleteReport(report.id);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${translate(context, 'report_deleted')} "${report.description}"'),
+        content: Text(
+            '${translate(context, 'report_deleted')} "${report.description}"'),
         backgroundColor: Colors.red,
         action: SnackBarAction(
           label: translate(context, 'undo'),
