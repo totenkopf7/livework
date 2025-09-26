@@ -27,21 +27,21 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   // CRITICAL: Set system UI overlay style
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Color(0xFF1f1e1e), // Your exact background color
-    statusBarIconBrightness:
-        Brightness.light, // Light icons for dark background
-    statusBarBrightness: Brightness.dark, // Dark status bar
-    systemNavigationBarColor: Color(0xFF1f1e1e), // Navigation bar color
-    systemNavigationBarIconBrightness: Brightness.light, // Light nav icons
-    systemNavigationBarContrastEnforced: true,
-  ));
+  // SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+  //   statusBarColor: Color(0xFF1f1e1e), // Your exact background color
+  //   statusBarIconBrightness:
+  //       Brightness.light, // Light icons for dark background
+  //   statusBarBrightness: Brightness.dark, // Dark status bar
+  //   systemNavigationBarColor: Color(0xFF1f1e1e), // Navigation bar color
+  //   systemNavigationBarIconBrightness: Brightness.light, // Light nav icons
+  //   systemNavigationBarContrastEnforced: true,
+  // ));
 
-  // Set preferred orientations
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+  // // Set preferred orientations
+  // await SystemChrome.setPreferredOrientations([
+  //   DeviceOrientation.portraitUp,
+  //   DeviceOrientation.portraitDown,
+  // ]);
 
   // Enable full screen for PWA
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);

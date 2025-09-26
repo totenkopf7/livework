@@ -172,7 +172,7 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage> {
                       Text(
                         _formatDateHeader(dateKey),
                         style: const TextStyle(
-                          fontSize: 25,
+                          fontSize: 22,
                           fontWeight: FontWeight.bold,
                           color: Colors.orange,
                         ),
