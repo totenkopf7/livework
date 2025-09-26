@@ -320,11 +320,11 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
 
               List<BottomNavigationBarItem> items = [
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.dashboard, size: 24),
+                  icon: Icon(Icons.dashboard, size: 28),
                   label: translate(context, 'dashboard'),
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.map, size: 24),
+                  icon: Icon(Icons.map, size: 28),
                   label: translate(context, 'map'),
                 ),
               ];
@@ -332,14 +332,14 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
               if (authProvider.isAdmin) {
                 items.add(
                   BottomNavigationBarItem(
-                    icon: Icon(Icons.add_circle_outline, size: 24),
+                    icon: Icon(Icons.add_circle_outline, size: 28),
                     label: translate(context, 'new_report'),
                   ),
                 );
               } else {
                 items.add(
                   BottomNavigationBarItem(
-                    icon: Icon(Icons.block, size: 24),
+                    icon: Icon(Icons.block, size: 28),
                     label: translate(context, 'no_access'),
                   ),
                 );
@@ -349,34 +349,39 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
                 BottomNavigationBarItem(
                   icon: completedCount > 0
                       ? _buildBadgeIcon(completedCount)
-                      : Icon(Icons.assignment_turned_in, size: 24),
+                      : Icon(Icons.assignment_turned_in, size: 28),
                   label: translate(context, 'reports'),
                 ),
                 BottomNavigationBarItem(
                   icon: archivedCount > 0
                       ? _buildBadgeIcon(archivedCount, color: Colors.orange)
-                      : Icon(Icons.archive, size: 24),
+                      : Icon(Icons.archive, size: 28),
                   label: translate(context, 'archived'),
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.settings, size: 24),
+                  icon: Icon(Icons.settings, size: 28),
                   label: translate(context, 'settings'),
                 ),
               ]);
 
-              return BottomNavigationBar(
-                currentIndex: _currentIndex,
-                onTap: (index) {
-                  setState(() {
-                    _currentIndex = index;
-                  });
-                },
-                items: items,
-                selectedItemColor: AppColors.secondary,
-                unselectedItemColor: Colors.grey,
-                type: BottomNavigationBarType.fixed,
-                showSelectedLabels: true,
-                showUnselectedLabels: true,
+              return Container(
+                height: 70,
+                child: BottomNavigationBar(
+                  currentIndex: _currentIndex,
+                  onTap: (index) {
+                    setState(() {
+                      _currentIndex = index;
+                    });
+                  },
+                  items: items,
+                  selectedItemColor: AppColors.secondary,
+                  unselectedItemColor: Colors.grey,
+                  type: BottomNavigationBarType.fixed,
+                  showSelectedLabels: true,
+                  selectedFontSize: 16,
+                  unselectedFontSize: 14,
+                  showUnselectedLabels: true,
+                ),
               );
             },
           ),
