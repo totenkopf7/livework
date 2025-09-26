@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:livework_view/pages/login_page.dart';
 import 'package:provider/provider.dart';
@@ -25,6 +26,26 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  // CRITICAL: Set system UI overlay style
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Color(0xFF1f1e1e), // Your exact background color
+    statusBarIconBrightness:
+        Brightness.light, // Light icons for dark background
+    statusBarBrightness: Brightness.dark, // Dark status bar
+    systemNavigationBarColor: Color(0xFF1f1e1e), // Navigation bar color
+    systemNavigationBarIconBrightness: Brightness.light, // Light nav icons
+    systemNavigationBarContrastEnforced: true,
+  ));
+
+  // Set preferred orientations
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
+  // Enable full screen for PWA
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
   runApp(const LiveWorkViewApp());
 }
 
@@ -71,7 +92,15 @@ class LiveWorkViewApp extends StatelessWidget {
               appBarTheme: const AppBarTheme(
                 backgroundColor: AppColors.background,
                 foregroundColor: AppColors.secondary,
-                elevation: 2,
+                elevation: 0,
+                systemOverlayStyle: SystemUiOverlayStyle(
+                  statusBarColor:
+                      Colors.transparent, // Important for edge-to-edge
+                  statusBarIconBrightness: Brightness.light,
+                  statusBarBrightness: Brightness.dark,
+                  systemNavigationBarColor: Color(0xFF1f1e1e),
+                  systemNavigationBarIconBrightness: Brightness.light,
+                ),
                 iconTheme: IconThemeData(color: Colors.white),
               ),
               iconTheme: const IconThemeData(color: Colors.black),

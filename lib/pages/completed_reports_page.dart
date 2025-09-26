@@ -34,6 +34,7 @@ class _CompletedReportsPageState extends State<CompletedReportsPage> {
     final isAdmin = authProvider.isAdmin;
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(translate(context, 'completed_reports')),
         backgroundColor: AppColors.background,

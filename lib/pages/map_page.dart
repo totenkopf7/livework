@@ -29,6 +29,7 @@ class _MapPageState extends State<MapPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(translate(context, 'map')), // UPDATED
         backgroundColor: AppColors.background,

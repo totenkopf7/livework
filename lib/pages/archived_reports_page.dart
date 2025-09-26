@@ -33,6 +33,7 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage> {
     final isAdmin = authProvider.isAdmin;
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(translate(context, 'archived_reports')),
         backgroundColor: AppColors.background,

@@ -48,6 +48,7 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(
         title: Text(translate(context, 'dashboard')),
         backgroundColor: AppColors.background,
@@ -73,7 +74,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 _showMapView = !_showMapView;
               });
             },
-            tooltip: _showMapView 
+            tooltip: _showMapView
                 ? translate(context, 'show_list_view')
                 : translate(context, 'show_map_view'),
           ),
@@ -120,10 +121,14 @@ class _DashboardPageState extends State<DashboardPage> {
           }
 
           // Only show active reports (not completed and not archived) on dashboard
-          final filteredReports = reportProvider.applyFilters(
-            type: _selectedType,
-            status: _selectedStatus,
-          ).where((report) => report.status != ReportStatus.done && !report.isArchived).toList();
+          final filteredReports = reportProvider
+              .applyFilters(
+                type: _selectedType,
+                status: _selectedStatus,
+              )
+              .where((report) =>
+                  report.status != ReportStatus.done && !report.isArchived)
+              .toList();
 
           return Column(
             children: [
@@ -153,7 +158,8 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildListView(List<ReportModel> reports, ReportProvider reportProvider) {
+  Widget _buildListView(
+      List<ReportModel> reports, ReportProvider reportProvider) {
     if (reports.isEmpty) {
       return RefreshIndicator(
         onRefresh: _refreshReports,
@@ -199,8 +205,10 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildMapView(List<ReportModel> reports) {
     // Filter out reports without map coordinates AND archived reports
-    final reportsWithLocation = reports.where((report) => 
-        report.mapX != null && report.mapY != null && !report.isArchived).toList(); // ADDED: !report.isArchived
+    final reportsWithLocation = reports
+        .where((report) =>
+            report.mapX != null && report.mapY != null && !report.isArchived)
+        .toList(); // ADDED: !report.isArchived
 
     if (reportsWithLocation.isEmpty) {
       return Center(
@@ -227,7 +235,8 @@ class _DashboardPageState extends State<DashboardPage> {
         // Show coordinates when tapping on map
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${translate(context, 'selected')}: ${(x * 100).toStringAsFixed(1)}%, ${(y * 100).toStringAsFixed(1)}%'),
+            content: Text(
+                '${translate(context, 'selected')}: ${(x * 100).toStringAsFixed(1)}%, ${(y * 100).toStringAsFixed(1)}%'),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -236,12 +245,11 @@ class _DashboardPageState extends State<DashboardPage> {
       onMarkerTap: (marker) {
         // Find the report that matches this marker
         final report = reportsWithLocation.firstWhere(
-          (r) => r.mapX == marker.x && r.mapY == marker.y,
-          orElse: () => reportsWithLocation.firstWhere(
-            (r) => (r.mapX! - marker.x).abs() < 0.01 && (r.mapY! - marker.y).abs() < 0.01
-          )
-        );
-        
+            (r) => r.mapX == marker.x && r.mapY == marker.y,
+            orElse: () => reportsWithLocation.firstWhere((r) =>
+                (r.mapX! - marker.x).abs() < 0.01 &&
+                (r.mapY! - marker.y).abs() < 0.01));
+
         _showReportDetails(report);
       },
     );
@@ -277,15 +285,19 @@ class _DashboardPageState extends State<DashboardPage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('${translate(context, 'type')}: ${report.type.toString().split('.').last}'),
-              Text('${translate(context, 'status')}: ${report.status.toString().split('.').last}'),
+              Text(
+                  '${translate(context, 'type')}: ${report.type.toString().split('.').last}'),
+              Text(
+                  '${translate(context, 'status')}: ${report.status.toString().split('.').last}'),
               Text('${translate(context, 'zone')}: ${report.zone}'),
               const SizedBox(height: 8),
-              Text('${translate(context, 'description')}:', style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text('${translate(context, 'description')}:',
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
               Text(report.description),
               const SizedBox(height: 8),
               if (report.mapX != null && report.mapY != null)
-                Text('${translate(context, 'map_location')}: ${(report.mapX! * 100).toStringAsFixed(1)}%, ${(report.mapY! * 100).toStringAsFixed(1)}%'),
+                Text(
+                    '${translate(context, 'map_location')}: ${(report.mapX! * 100).toStringAsFixed(1)}%, ${(report.mapY! * 100).toStringAsFixed(1)}%'),
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
                 child: Text(translate(context, 'close')),
