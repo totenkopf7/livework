@@ -98,6 +98,8 @@
   "hazards": "Hazards",
   "edit_report": "Edit Report",
   "save_changes": "Save Changes",
-  "report_updated": "Report updated successfully!"
+  "report_updated": "Report updated successfully!",
+  "take_photo": "Take Photo",
+  "choose_from_gallery": "Choose from Gallery"
 
 }

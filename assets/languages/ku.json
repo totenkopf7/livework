@@ -100,5 +100,7 @@
    "delete_all": "ژێبرنا هەمی ریپورتا",
    "edit_report": "راستڤەکرنا راپورتێ",
    "save_changes": "خەزن کرن",
-    "report_updated": "راپورت سەرکەفتیانە ڕاستڤەبوو!"
+    "report_updated": "راپورت سەرکەفتیانە ڕاستڤەبوو!",
+    "take_photo": "وێنەی بگرە",
+    "choose_from_gallery": "ژ گەلەریێ هەلبژێرە"
 }
