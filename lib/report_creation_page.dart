@@ -646,36 +646,38 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                                   ]
                                 : [],
                           ),
+
+                          // This shows the map location in percentage numbers
                           if (_mapX != null && _mapY != null) ...[
-                            SizedBox(height: 12),
-                            Container(
-                              padding: EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.green.shade50,
-                                borderRadius: BorderRadius.circular(8),
-                                border:
-                                    Border.all(color: Colors.green.shade200),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.check_circle,
-                                    color: Colors.green.shade600,
-                                    size: 20,
-                                  ),
-                                  SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      '${translate(context, 'location_selected')}: ${(_mapX! * 100).toStringAsFixed(1)}%, ${(_mapY! * 100).toStringAsFixed(1)}%', // UPDATED: Use translation
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.green.shade700,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                            // SizedBox(height: 12),
+                            // Container(
+                            //   padding: EdgeInsets.all(12),
+                            //   decoration: BoxDecoration(
+                            //     color: Colors.green.shade50,
+                            //     borderRadius: BorderRadius.circular(8),
+                            //     border:
+                            //         Border.all(color: Colors.green.shade200),
+                            //   ),
+                            //   child: Row(
+                            //     children: [
+                            //       Icon(
+                            //         Icons.check_circle,
+                            //         color: Colors.green.shade600,
+                            //         size: 20,
+                            //       ),
+                            //       SizedBox(width: 8),
+                            //       Expanded(
+                            //         child: Text(
+                            //           '${translate(context, 'location_selected')}: ${(_mapX! * 100).toStringAsFixed(1)}%, ${(_mapY! * 100).toStringAsFixed(1)}%', // UPDATED: Use translation
+                            //           style: TextStyle(
+                            //             fontSize: 14,
+                            //             color: Colors.green.shade700,
+                            //           ),
+                            //         ),
+                            //       ),
+                            //     ],
+                            //   ),
+                            // ),
                           ],
                         ],
                       ),

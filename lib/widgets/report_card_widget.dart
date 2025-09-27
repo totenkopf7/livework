@@ -192,7 +192,7 @@ class ReportCardWidget extends StatelessWidget {
             if (isAdmin) ...[
               const SizedBox(height: 12),
 
-                            // ADD EDIT BUTTON TO ADMIN ACTIONS SECTION
+              // ADD EDIT BUTTON TO ADMIN ACTIONS SECTION
               if (showEditButton && onEdit != null)
                 _buildActionButton(
                   context,
@@ -285,7 +285,8 @@ class ReportCardWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButton(BuildContext context, {
+  Widget _buildActionButton(
+    BuildContext context, {
     required IconData icon,
     required String text,
     required Color color,

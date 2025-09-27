@@ -562,35 +562,35 @@ class _EditReportPageState extends State<EditReportPage> {
                   const SizedBox(height: 16),
 
                   // Map Location Section (Optional - reuse from creation page)
-                  if (widget.report.mapX != null || _mapX != null) ...[
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              translate(context, 'map_location'),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              '${translate(context, 'current_location')}: '
-                              '${((_mapX ?? widget.report.mapX ?? 0) * 100).toStringAsFixed(1)}%, '
-                              '${((_mapY ?? widget.report.mapY ?? 0) * 100).toStringAsFixed(1)}%',
-                              style: TextStyle(color: Colors.grey[600]),
-                            ),
-                            const SizedBox(height: 12),
-                            // You can add map widget here to allow location changes
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
+                  // if (widget.report.mapX != null || _mapX != null) ...[
+                  //   Card(
+                  //     child: Padding(
+                  //       padding: const EdgeInsets.all(16),
+                  //       child: Column(
+                  //         crossAxisAlignment: CrossAxisAlignment.start,
+                  //         children: [
+                  //           Text(
+                  //             translate(context, 'map_location'),
+                  //             style: const TextStyle(
+                  //               fontSize: 16,
+                  //               fontWeight: FontWeight.bold,
+                  //             ),
+                  //           ),
+                  //           const SizedBox(height: 8),
+                  //           Text(
+                  //             '${translate(context, 'current_location')}: '
+                  //             '${((_mapX ?? widget.report.mapX ?? 0) * 100).toStringAsFixed(1)}%, '
+                  //             '${((_mapY ?? widget.report.mapY ?? 0) * 100).toStringAsFixed(1)}%',
+                  //             style: TextStyle(color: Colors.grey[600]),
+                  //           ),
+                  //           const SizedBox(height: 12),
+                  //           // You can add map widget here to allow location changes
+                  //         ],
+                  //       ),
+                  //     ),
+                  //   ),
+                  //   const SizedBox(height: 16),
+                  // ],
 
                   // Save Button
                   ElevatedButton(
