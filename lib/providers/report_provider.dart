@@ -23,7 +23,7 @@ class ReportProvider with ChangeNotifier {
 
   Map<String, List<ReportModel>> get archivedReportsByDate {
     final Map<String, List<ReportModel>> grouped = {};
-    
+
     for (final report in archivedReports) {
       // FIXED: Use original creation date (timestamp) instead of archive date
       final dateKey = _formatDateKey(report.timestamp);
@@ -32,27 +32,86 @@ class ReportProvider with ChangeNotifier {
       }
       grouped[dateKey]!.add(report);
     }
-    
-    final sortedKeys = grouped.keys.toList()
-      ..sort((a, b) => b.compareTo(a));
-    
+
+    final sortedKeys = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
+
     final sortedMap = <String, List<ReportModel>>{};
     for (final key in sortedKeys) {
       sortedMap[key] = grouped[key]!;
     }
-    
+
     return sortedMap;
+  }
+
+// ADD THIS METHOD TO HANDLE REPORT EDITS
+  Future<void> editReport({
+    required String reportId,
+    String? description,
+    String? zone,
+    ReportType? type,
+    List<String>? photoUrls,
+    double? mapX,
+    double? mapY,
+  }) async {
+    try {
+      // Find the report to edit
+      final reportIndex =
+          _reports.indexWhere((report) => report.id == reportId);
+      if (reportIndex == -1) {
+        throw Exception('Report not found');
+      }
+
+      final originalReport = _reports[reportIndex];
+
+      // Create updated report with new values
+      final updatedReport = originalReport.copyWith(
+        description: description ?? originalReport.description,
+        zone: zone ?? originalReport.zone,
+        type: type ?? originalReport.type,
+        photoUrls: photoUrls ?? originalReport.photoUrls,
+        mapX: mapX ?? originalReport.mapX,
+        mapY: mapY ?? originalReport.mapY,
+        lastEditedAt: DateTime.now(),
+        lastEditedBy: _currentUser?.name ?? 'Unknown User',
+        editCount: originalReport.editCount + 1,
+      );
+
+      // Update in Firestore
+      try {
+        await FirebaseFirestore.instance
+            .collection('reports')
+            .doc(reportId)
+            .update(updatedReport.toFirestore());
+        print('Report updated in Firestore: $reportId');
+      } catch (e) {
+        print('Error updating report in Firestore: $e');
+        throw Exception('Failed to update report in cloud: $e');
+      }
+
+      // Update local state - THIS IS IMPORTANT FOR UI UPDATE
+      _reports[reportIndex] = updatedReport;
+      notifyListeners(); // This triggers UI rebuild
+    } catch (e) {
+      // Use a more descriptive error message
+      _error = 'Failed to edit report: ${e.toString()}';
+      notifyListeners();
+      throw e; // Re-throw to handle in UI
+    }
   }
 
   void setCurrentUser(livework_auth.AppUser? user) {
     _currentUser = user;
   }
 
-  List<ReportModel> get activeReports =>
-      _reports.where((report) => report.status != ReportStatus.done && !report.isArchived).toList();
+  List<ReportModel> get activeReports => _reports
+      .where(
+          (report) => report.status != ReportStatus.done && !report.isArchived)
+      .toList();
 
-  List<ReportModel> get completedReports =>
-      _reports.where((report) => report.status == ReportStatus.done && !report.isArchived).toList();
+  List<ReportModel> get completedReports => _reports
+      .where(
+          (report) => report.status == ReportStatus.done && !report.isArchived)
+      .toList();
 
   ReportProvider() {
     loadReports();
@@ -159,7 +218,8 @@ class ReportProvider with ChangeNotifier {
         description: 'Electrical maintenance in building A',
         photoUrls: [],
         status: ReportStatus.inProgress,
-        timestamp: DateTime.now().subtract(const Duration(days: 3)), // Different date for testing
+        timestamp: DateTime.now()
+            .subtract(const Duration(days: 3)), // Different date for testing
         reporterName: 'John Doe',
         reporterId: 'user_123',
         latitude: 29.7604,
@@ -173,7 +233,8 @@ class ReportProvider with ChangeNotifier {
         description: 'Slippery floor near entrance',
         photoUrls: [],
         status: ReportStatus.hazard,
-        timestamp: DateTime.now().subtract(const Duration(days: 2)), // Different date for testing
+        timestamp: DateTime.now()
+            .subtract(const Duration(days: 2)), // Different date for testing
         reporterName: 'Jane Smith',
         reporterId: 'user_456',
         latitude: 29.7605,
@@ -187,7 +248,8 @@ class ReportProvider with ChangeNotifier {
         description: 'Completed plumbing repair',
         photoUrls: [],
         status: ReportStatus.done,
-        timestamp: DateTime.now().subtract(const Duration(days: 1)), // Different date for testing
+        timestamp: DateTime.now()
+            .subtract(const Duration(days: 1)), // Different date for testing
         reporterName: 'Bob Wilson',
         reporterId: 'user_789',
         latitude: 29.7606,
@@ -303,11 +365,13 @@ class ReportProvider with ChangeNotifier {
 
   Future<void> archiveReport(String reportId) async {
     try {
-      final reportIndex = _reports.indexWhere((report) => report.id == reportId);
+      final reportIndex =
+          _reports.indexWhere((report) => report.id == reportId);
       if (reportIndex != -1) {
         final updatedReport = _reports[reportIndex].copyWith(
           isArchived: true,
-          archivedDate: DateTime.now(), // Still store archive date for reference
+          archivedDate:
+              DateTime.now(), // Still store archive date for reference
         );
         _reports[reportIndex] = updatedReport;
 
@@ -316,9 +380,9 @@ class ReportProvider with ChangeNotifier {
               .collection('reports')
               .doc(reportId)
               .update({
-                'isArchived': true,
-                'archivedDate': Timestamp.fromDate(DateTime.now()),
-              });
+            'isArchived': true,
+            'archivedDate': Timestamp.fromDate(DateTime.now()),
+          });
           print('Report archived in Firestore: $reportId');
         } catch (e) {
           print('Error archiving report in Firestore: $e');
@@ -335,7 +399,8 @@ class ReportProvider with ChangeNotifier {
 
   Future<void> unarchiveReport(String reportId) async {
     try {
-      final reportIndex = _reports.indexWhere((report) => report.id == reportId);
+      final reportIndex =
+          _reports.indexWhere((report) => report.id == reportId);
       if (reportIndex != -1) {
         final updatedReport = _reports[reportIndex].copyWith(
           isArchived: false,
@@ -348,9 +413,9 @@ class ReportProvider with ChangeNotifier {
               .collection('reports')
               .doc(reportId)
               .update({
-                'isArchived': false,
-                'archivedDate': null,
-              });
+            'isArchived': false,
+            'archivedDate': null,
+          });
           print('Report unarchived in Firestore: $reportId');
         } catch (e) {
           print('Error unarchiving report in Firestore: $e');
@@ -392,7 +457,7 @@ class ReportProvider with ChangeNotifier {
     try {
       final reportsToDelete = archivedReportsByDate[dateKey] ?? [];
       final reportIds = reportsToDelete.map((report) => report.id).toList();
-      
+
       for (final reportId in reportIds) {
         try {
           await FirebaseFirestore.instance

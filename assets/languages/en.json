@@ -95,5 +95,9 @@
   "no_reports_found": "No reports found",
   "Tap_if_controlled": "Tap if controlled",
   "tasks": "Tasks",
-  "hazards": "Hazards"
+  "hazards": "Hazards",
+  "edit_report": "Edit Report",
+  "save_changes": "Save Changes",
+  "report_updated": "Report updated successfully!"
+
 }

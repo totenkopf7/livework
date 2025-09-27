@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:livework_view/pages/edit_report_page.dart';
 import 'package:livework_view/widgets/colors.dart';
 import 'package:provider/provider.dart';
 import 'providers/report_provider.dart';
@@ -160,6 +161,21 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildListView(
       List<ReportModel> reports, ReportProvider reportProvider) {
+    itemBuilder:
+    (context, index) {
+      final report = reports[index];
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: ReportCardWidget(
+          report: report,
+          onStatusChanged: (newStatus) {
+            Provider.of<ReportProvider>(context, listen: false)
+                .updateReportStatus(report.id, newStatus);
+          },
+        ),
+      );
+    };
+
     if (reports.isEmpty) {
       return RefreshIndicator(
         onRefresh: _refreshReports,
@@ -196,6 +212,8 @@ class _DashboardPageState extends State<DashboardPage> {
               },
               showCompleteButton: report.type == ReportType.work,
               showControlledButton: report.type == ReportType.hazard,
+              showEditButton: true, // ENABLE EDIT BUTTON
+              onEdit: () => _editReport(report), // ADD EDIT HANDLER
             ),
           );
         },
@@ -273,6 +291,14 @@ class _DashboardPageState extends State<DashboardPage> {
       case ReportType.hazard:
         return Icons.warning;
     }
+  }
+
+  void _editReport(ReportModel report) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => EditReportPage(report: report),
+      ),
+    );
   }
 
   void _showReportDetails(ReportModel report) {

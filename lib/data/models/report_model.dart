@@ -21,6 +21,9 @@ class ReportModel {
   final double? mapY;
   final bool isArchived;
   final DateTime? archivedDate;
+  final DateTime? lastEditedAt;
+  final String? lastEditedBy;
+  final int editCount;
 
   ReportModel({
     required this.id,
@@ -39,6 +42,9 @@ class ReportModel {
     this.mapY,
     this.isArchived = false,
     this.archivedDate,
+    this.lastEditedAt,
+    this.lastEditedBy,
+    this.editCount = 0,
   });
 
   Map<String, dynamic> toFirestore() {
@@ -57,7 +63,12 @@ class ReportModel {
       'mapX': mapX,
       'mapY': mapY,
       'isArchived': isArchived,
-      'archivedDate': archivedDate != null ? Timestamp.fromDate(archivedDate!) : null,
+      'archivedDate':
+          archivedDate != null ? Timestamp.fromDate(archivedDate!) : null,
+      'lastEditedAt':
+          lastEditedAt != null ? Timestamp.fromDate(lastEditedAt!) : null,
+      'lastEditedBy': lastEditedBy,
+      'editCount': editCount,
     };
   }
 
@@ -76,7 +87,7 @@ class ReportModel {
         (e) => e.name == data['status'],
         orElse: () => ReportStatus.inProgress,
       ),
-      timestamp: data['timestamp'] != null 
+      timestamp: data['timestamp'] != null
           ? (data['timestamp'] as Timestamp).toDate()
           : DateTime.now(),
       reporterName: data['reporterName'],
@@ -86,9 +97,14 @@ class ReportModel {
       mapX: data['mapX']?.toDouble(),
       mapY: data['mapY']?.toDouble(),
       isArchived: data['isArchived'] ?? false,
-      archivedDate: data['archivedDate'] != null 
+      archivedDate: data['archivedDate'] != null
           ? (data['archivedDate'] as Timestamp).toDate()
           : null,
+      lastEditedAt: data['lastEditedAt'] != null
+          ? (data['lastEditedAt'] as Timestamp).toDate()
+          : null,
+      lastEditedBy: data['lastEditedBy'],
+      editCount: data['editCount'] ?? 0,
     );
   }
 
@@ -109,6 +125,9 @@ class ReportModel {
     double? mapY,
     bool? isArchived,
     DateTime? archivedDate,
+    DateTime? lastEditedAt,
+    String? lastEditedBy,
+    int? editCount,
   }) {
     return ReportModel(
       id: id ?? this.id,
@@ -127,6 +146,9 @@ class ReportModel {
       mapY: mapY ?? this.mapY,
       isArchived: isArchived ?? this.isArchived,
       archivedDate: archivedDate ?? this.archivedDate,
+      lastEditedAt: lastEditedAt ?? this.lastEditedAt,
+      lastEditedBy: lastEditedBy ?? this.lastEditedBy,
+      editCount: editCount ?? this.editCount,
     );
   }
 

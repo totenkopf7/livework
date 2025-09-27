@@ -24,6 +24,8 @@ class ReportCardWidget extends StatelessWidget {
   final bool showCompleteButton;
   final bool showControlledButton;
   final bool showStatusDropdown;
+  final bool showEditButton;
+  final VoidCallback? onEdit;
 
   const ReportCardWidget({
     Key? key,
@@ -38,6 +40,8 @@ class ReportCardWidget extends StatelessWidget {
     this.showCompleteButton = false,
     this.showControlledButton = false,
     this.showStatusDropdown = false,
+    this.showEditButton = false,
+    this.onEdit,
   }) : super(key: key);
 
   @override
@@ -187,6 +191,17 @@ class ReportCardWidget extends StatelessWidget {
             ],
             if (isAdmin) ...[
               const SizedBox(height: 12),
+
+                            // ADD EDIT BUTTON TO ADMIN ACTIONS SECTION
+              if (showEditButton && onEdit != null)
+                _buildActionButton(
+                  context,
+                  icon: Icons.edit,
+                  text: translate(context, 'edit_report'),
+                  color: Colors.blue,
+                  onPressed: onEdit!,
+                ),
+
               if (showCompleteButton && report.type == ReportType.work)
                 _buildActionButton(
                   context,
@@ -231,6 +246,7 @@ class ReportCardWidget extends StatelessWidget {
                   color: Colors.red,
                   onPressed: onDelete!,
                 ),
+
               if (showStatusDropdown && !report.isArchived)
                 Row(
                   children: [
@@ -269,8 +285,7 @@ class ReportCardWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButton(
-    BuildContext context, {
+  Widget _buildActionButton(BuildContext context, {
     required IconData icon,
     required String text,
     required Color color,
