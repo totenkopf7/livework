@@ -59,6 +59,7 @@
   "sign_in": "Sign In",
   "tap_if_completed": "Tap if completed",
   "delete_report": "Delete Report",
+  "delete_report_confirmation": "Are you sure you want to delete the report ",
   "status": "Status",
   "view_location_tooltip": "View Location",
   "image": "Image",
@@ -94,13 +95,14 @@
   "archived_on": "Archived on",
   "this_action_cannot_be_undone": "This action cannot be undone",
   "no_reports_found": "No reports found",
-  "Tap_if_controlled": "Tap if controlled",
+  "tap_if_controlled": "Tap if controlled",
   "tasks": "Tasks",
   "hazards": "Hazards",
   "edit_report": "Edit Report",
   "save_changes": "Save Changes",
   "report_updated": "Report updated successfully!",
   "take_photo": "Take Photo",
-  "choose_from_gallery": "Choose from Gallery"
+  "from_gallery": "From Gallery",
+  "no_completed_reports": "No completed reports"
 
 }

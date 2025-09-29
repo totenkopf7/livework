@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:livework_view/providers/auth_provider.dart' as livework_auth;
+import 'package:livework_view/providers/language_provider.dart';
 import 'package:livework_view/widgets/colors.dart';
 import 'package:provider/provider.dart';
 import '../providers/report_provider.dart';
@@ -114,13 +115,17 @@ class _CompletedReportsPageState extends State<CompletedReportsPage> {
                 siteId: siteProvider.currentSite!.id);
           }
         },
-        child: Center(
-          child: Text(
-            translate(context, 'no_completed_reports'),
-            style: const TextStyle(fontSize: 16, color: Colors.grey),
-            textAlign: TextAlign.center,
-          ),
-        ),
+        child: Center(child: Consumer<LanguageProvider>(
+            builder: (context, languageProvider, child) {
+          return Text(
+            translate(
+                context, 'no_completed_reports'), // UPDATED: Use translation
+            style: TextStyle(
+              fontSize: 16, color: Colors.grey,
+              // fontWeight: FontWeight.bold,
+            ),
+          );
+        })),
       );
     }
 

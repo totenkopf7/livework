@@ -1,5 +1,6 @@
 // UPDATED: lib/pages/login_page.dart
 import 'package:flutter/material.dart';
+import 'package:livework_view/providers/language_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:livework_view/widgets/colors.dart';
 import 'package:livework_view/providers/auth_provider.dart' as livework_auth;
@@ -42,6 +43,7 @@ class _LoginPageState extends State<LoginPage> {
                 color: AppColors.secondary,
               ),
               const SizedBox(height: 32),
+
               Text(
                 translate(context, 'LiveWork View'), // UPDATED: Use translation
                 style: TextStyle(
@@ -59,6 +61,32 @@ class _LoginPageState extends State<LoginPage> {
                   color: Colors.grey,
                 ),
               ),
+
+              Consumer<LanguageProvider>(
+                  builder: (context, languageProvider, child) {
+                return Text(
+                  translate(context, 'app_title'), // UPDATED: Use translation
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.secondary,
+                  ),
+                );
+              }),
+              const SizedBox(height: 8),
+              Consumer<LanguageProvider>(
+                  builder: (context, languageProvider, child) {
+                return Text(
+                  translate(context,
+                      'sign_in_to_continue'), // UPDATED: Use translation
+                  style: TextStyle(
+                    fontSize: 12,
+                    // fontWeight: FontWeight.bold,
+                    color: Colors.grey,
+                  ),
+                );
+              }),
+
               const SizedBox(height: 32),
               Card(
                 elevation: 4,
@@ -159,8 +187,20 @@ class _LoginPageState extends State<LoginPage> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
-                              child: Text(translate(context,
-                                  'Sign in')), // UPDATED: Use translation
+
+                              child: Consumer<LanguageProvider>(
+                                  builder: (context, languageProvider, child) {
+                                return Text(
+                                  translate(context,
+                                      'sign_in'), // UPDATED: Use translation
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.secondary,
+                                  ),
+                                );
+                              }), // UPDATED: Use translation
+
                             );
                           },
                         ),
