@@ -43,7 +43,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 32),
               Text(
-                translate(context, 'app_title'), // UPDATED: Use translation
+                translate(context, 'LiveWork View'), // UPDATED: Use translation
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -52,7 +52,8 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 8),
               Text(
-                translate(context, 'sign_in_to_continue'), // UPDATED: Use translation
+                translate(
+                    context, 'Sign in to continue'), // UPDATED: Use translation
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.grey,
@@ -73,17 +74,20 @@ class _LoginPageState extends State<LoginPage> {
                         TextFormField(
                           controller: _emailController,
                           decoration: InputDecoration(
-                            labelText: translate(context, 'email'), // UPDATED: Use translation
+                            labelText: translate(
+                                context, 'email'), // UPDATED: Use translation
                             prefixIcon: Icon(Icons.email),
                             border: OutlineInputBorder(),
                           ),
                           keyboardType: TextInputType.emailAddress,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return translate(context, 'please_enter_email'); // UPDATED: Use translation
+                              return translate(context,
+                                  'please_enter_email'); // UPDATED: Use translation
                             }
                             if (!value.contains('@')) {
-                              return translate(context, 'please_enter_valid_email'); // UPDATED: Use translation
+                              return translate(context,
+                                  'please_enter_valid_email'); // UPDATED: Use translation
                             }
                             return null;
                           },
@@ -92,7 +96,8 @@ class _LoginPageState extends State<LoginPage> {
                         TextFormField(
                           controller: _passwordController,
                           decoration: InputDecoration(
-                            labelText: translate(context, 'password'), // UPDATED: Use translation
+                            labelText: translate(context,
+                                'password'), // UPDATED: Use translation
                             prefixIcon: Icon(Icons.lock),
                             suffixIcon: IconButton(
                               icon: Icon(
@@ -111,10 +116,12 @@ class _LoginPageState extends State<LoginPage> {
                           obscureText: _obscurePassword,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return translate(context, 'please_enter_password'); // UPDATED: Use translation
+                              return translate(context,
+                                  'please_enter_password'); // UPDATED: Use translation
                             }
                             if (value.length < 6) {
-                              return translate(context, 'password_min_length'); // UPDATED: Use translation
+                              return translate(context,
+                                  'password_min_length'); // UPDATED: Use translation
                             }
                             return null;
                           },
@@ -125,7 +132,7 @@ class _LoginPageState extends State<LoginPage> {
                             if (authProvider.isLoading) {
                               return const CircularProgressIndicator();
                             }
-                            
+
                             return ElevatedButton(
                               onPressed: () async {
                                 if (_formKey.currentState!.validate()) {
@@ -133,7 +140,7 @@ class _LoginPageState extends State<LoginPage> {
                                     _emailController.text.trim(),
                                     _passwordController.text.trim(),
                                   );
-                                  
+
                                   if (!success && authProvider.error != null) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
@@ -152,14 +159,20 @@ class _LoginPageState extends State<LoginPage> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
-                              child: Text(translate(context, 'sign_in')), // UPDATED: Use translation
+                              child: Text(translate(context,
+                                  'Sign in')), // UPDATED: Use translation
                             );
                           },
                         ),
-                        if (context.watch<livework_auth.LiveWorkAuthProvider>().error != null) ...[
+                        if (context
+                                .watch<livework_auth.LiveWorkAuthProvider>()
+                                .error !=
+                            null) ...[
                           const SizedBox(height: 16),
                           Text(
-                            context.watch<livework_auth.LiveWorkAuthProvider>().error!,
+                            context
+                                .watch<livework_auth.LiveWorkAuthProvider>()
+                                .error!,
                             style: TextStyle(
                               color: Colors.red,
                               fontSize: 14,

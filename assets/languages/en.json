@@ -41,6 +41,7 @@
   "creating_report": "Creating Report...",
   "report_created": "Report created successfully!",
   "completed_reports": "Completed Reports",
+  "no_completed_reports": "No completed reports available",
   "in_progress": "In Progress",
   "completed": "Completed",
   "all_reports": "All Reports",
