@@ -192,7 +192,7 @@ class ReportCardWidget extends StatelessWidget {
             if (isAdmin) ...[
               const SizedBox(height: 12),
 
-              // UPDATED: REORGANIZED ACTION BUTTONS TO BE SIDE-BY-SIDE WHEN APPROPRIATE
+              // UPDATED: REORGANIZED ACTION BUTTONS TO PUT ARCHIVE AND DELETE BUTTONS SIDE BY SIDE
               _buildActionButtonsRow(context),
 
               if (showStatusDropdown && !report.isArchived)
@@ -233,7 +233,7 @@ class ReportCardWidget extends StatelessWidget {
     );
   }
 
-  // UPDATED: NEW METHOD TO ORGANIZE ACTION BUTTONS IN A ROW INSTEAD OF FULL WIDTH STACK
+  // UPDATED: REORGANIZED ACTION BUTTONS TO PUT ARCHIVE AND DELETE BUTTONS SIDE BY SIDE
   Widget _buildActionButtonsRow(BuildContext context) {
     List<Widget> actionButtons = [];
 
@@ -287,68 +287,69 @@ class ReportCardWidget extends StatelessWidget {
       );
     }
 
-    // ADD ARCHIVE/UNARCHIVE BUTTONS (STAY FULL WIDTH SINCE THEY ARE DESTRUCTIVE ACTIONS)
+    // UPDATED: CREATE A SEPARATE LIST FOR ARCHIVE/UNARCHIVE/DELETE BUTTONS TO BE SIDE BY SIDE
+    List<Widget> destructiveActionButtons = [];
+
+    // ADD ARCHIVE BUTTON
     if (showArchiveButton && onArchive != null) {
-      if (actionButtons.isNotEmpty) {
-        // If we have row buttons above, add spacing
-        actionButtons.add(const SizedBox(height: 8));
-      }
-      actionButtons.add(
-        _buildActionButton(
-          context,
-          icon: Icons.archive,
-          text: translate(context, 'archive_report'),
-          color: Colors.orange,
-          onPressed: onArchive!,
+      destructiveActionButtons.add(
+        Expanded(
+          child: _buildCompactActionButton(
+            context,
+            icon: Icons.archive,
+            text: translate(context, 'archive_report'),
+            color: Colors.green,
+            onPressed: onArchive!,
+          ),
         ),
       );
     }
 
+    // ADD UNARCHIVE BUTTON
     if (showUnarchiveButton && onUnarchive != null) {
-      if (actionButtons.isNotEmpty) {
-        actionButtons.add(const SizedBox(height: 8));
-      }
-      actionButtons.add(
-        _buildActionButton(
-          context,
-          icon: Icons.unarchive,
-          text: translate(context, 'unarchive_report'),
-          color: Colors.green,
-          onPressed: onUnarchive!,
+      if (destructiveActionButtons.isNotEmpty)
+        destructiveActionButtons.add(const SizedBox(width: 8));
+      destructiveActionButtons.add(
+        Expanded(
+          child: _buildCompactActionButton(
+            context,
+            icon: Icons.unarchive,
+            text: translate(context, 'unarchive_report'),
+            color: Colors.orange,
+            onPressed: onUnarchive!,
+          ),
         ),
       );
     }
 
-    // ADD DELETE BUTTON (STAY FULL WIDTH SINCE IT'S DESTRUCTIVE)
+    // ADD DELETE BUTTON
     if (showDeleteButton && onDelete != null) {
-      if (actionButtons.isNotEmpty) {
-        actionButtons.add(const SizedBox(height: 8));
-      }
-      actionButtons.add(
-        _buildActionButton(
-          context,
-          icon: Icons.delete,
-          text: translate(context, 'delete_report'),
-          color: Colors.red,
-          onPressed: onDelete!,
+      if (destructiveActionButtons.isNotEmpty)
+        destructiveActionButtons.add(const SizedBox(width: 8));
+      destructiveActionButtons.add(
+        Expanded(
+          child: _buildCompactActionButton(
+            context,
+            icon: Icons.delete,
+            text: translate(context, 'delete_report'),
+            color: Colors.red,
+            onPressed: onDelete!,
+          ),
         ),
       );
     }
 
-    // RETURN COLUMN WITH POTENTIAL ROW FOR SIDE-BY-SIDE BUTTONS
+    // RETURN COLUMN WITH ROWS FOR DIFFERENT BUTTON GROUPS
     return Column(
       children: [
         // ROW FOR EDIT/COMPLETE/CONTROLLED BUTTONS
-        if (showEditButton || showCompleteButton || showControlledButton)
-          Row(
-            children: actionButtons
-                .where((button) => button is Expanded)
-                .cast<Widget>()
-                .toList(),
-          ),
+        if (actionButtons.isNotEmpty) Row(children: actionButtons),
 
-        // FULL WIDTH BUTTONS FOR ARCHIVE/UNARCHIVE/DELETE
-        ...actionButtons.where((button) => button is! Expanded).toList(),
+        // UPDATED: ROW FOR ARCHIVE/UNARCHIVE/DELETE BUTTONS (SIDE BY SIDE)
+        if (destructiveActionButtons.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Row(children: destructiveActionButtons),
+        ],
       ],
     );
   }
@@ -380,35 +381,6 @@ class ReportCardWidget extends StatelessWidget {
           foregroundColor: Colors.white,
           elevation: 2,
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-        ),
-      ),
-    );
-  }
-
-  // ORIGINAL FULL WIDTH BUTTON FOR ARCHIVE/DELETE ACTIONS
-  Widget _buildActionButton(
-    BuildContext context, {
-    required IconData icon,
-    required String text,
-    required Color color,
-    required VoidCallback onPressed,
-  }) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        border: Border.all(color: color.withOpacity(0.5)),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: ElevatedButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 18),
-        label: Text(text),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          foregroundColor: Colors.white,
-          elevation: 2,
-          padding: const EdgeInsets.symmetric(vertical: 12),
         ),
       ),
     );
