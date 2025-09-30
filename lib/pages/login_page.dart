@@ -62,30 +62,30 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
 
-              Consumer<LanguageProvider>(
-                  builder: (context, languageProvider, child) {
-                return Text(
-                  translate(context, 'app_title'), // UPDATED: Use translation
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.secondary,
-                  ),
-                );
-              }),
-              const SizedBox(height: 8),
-              Consumer<LanguageProvider>(
-                  builder: (context, languageProvider, child) {
-                return Text(
-                  translate(context,
-                      'sign_in_to_continue'), // UPDATED: Use translation
-                  style: TextStyle(
-                    fontSize: 12,
-                    // fontWeight: FontWeight.bold,
-                    color: Colors.grey,
-                  ),
-                );
-              }),
+              // Consumer<LanguageProvider>(
+              //     builder: (context, languageProvider, child) {
+              //   return Text(
+              //     translate(context, 'app_title'), // UPDATED: Use translation
+              //     style: TextStyle(
+              //       fontSize: 28,
+              //       fontWeight: FontWeight.bold,
+              //       color: AppColors.secondary,
+              //     ),
+              //   );
+              // }),
+              // const SizedBox(height: 8),
+              // Consumer<LanguageProvider>(
+              //     builder: (context, languageProvider, child) {
+              //   return Text(
+              //     translate(context,
+              //         'sign_in_to_continue'), // UPDATED: Use translation
+              //     style: TextStyle(
+              //       fontSize: 12,
+              //       // fontWeight: FontWeight.bold,
+              //       color: Colors.grey,
+              //     ),
+              //   );
+              // }),
 
               const SizedBox(height: 32),
               Card(
@@ -200,7 +200,6 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
                                 );
                               }), // UPDATED: Use translation
-
                             );
                           },
                         ),
