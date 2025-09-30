@@ -378,8 +378,8 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
                   unselectedItemColor: Colors.grey,
                   type: BottomNavigationBarType.fixed,
                   showSelectedLabels: true,
-                  selectedFontSize: 16,
-                  unselectedFontSize: 14,
+                  selectedFontSize: 12,
+                  unselectedFontSize: 10,
                   showUnselectedLabels: true,
                 ),
               );

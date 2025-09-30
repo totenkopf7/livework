@@ -51,7 +51,7 @@ class _DashboardPageState extends State<DashboardPage> {
     return Scaffold(
       // backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text(translate(context, 'dashboard')),
+        title: Text(translate(context, 'Tasks & Hazards')),
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.secondary,
         actions: [
