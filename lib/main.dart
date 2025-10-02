@@ -20,6 +20,7 @@ import 'providers/language_provider.dart';
 import 'helpers/localization_helper.dart';
 import 'localization/kurdish_material_localizations.dart';
 import 'localization/kurdish_cupertino_localizations.dart';
+import 'package:lottie/lottie.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -293,7 +294,29 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
         if (authProvider.isAdmin) {
           pages.add(const ReportCreationPage());
         } else {
-          pages.add(Center(child: Text(translate(context, 'no_access'))));
+          pages.add(Center(
+            child: Column(
+              mainAxisAlignment:
+                  MainAxisAlignment.center, // ⬅️ vertically center
+              crossAxisAlignment:
+                  CrossAxisAlignment.center, // ⬅️ horizontally center
+              children: [
+                Lottie.asset(
+                  'assets/animations/no.json',
+                  width: 100,
+                  height: 100,
+                  repeat: true, // or false if you want it to play once
+                ),
+                SizedBox(height: 30),
+                Text(
+                  translate(context, 'no_access_page'),
+                  style: TextStyle(fontSize: 18, color: Colors.grey),
+                ),
+              ],
+            ),
+          ));
+          // SizedBox(height: 20);
+          // pages.add(Center(child: Text(translate(context, 'no_access'))));
         }
 
         pages.addAll([
