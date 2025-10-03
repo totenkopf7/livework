@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -279,6 +280,34 @@ class MainNavigationPage extends StatefulWidget {
 class _MainNavigationPageState extends State<MainNavigationPage> {
   int _currentIndex = 0;
 
+//>>>>>>>>>>>>> tO TRACK USER USAGE <<<<<<<<<<<<<<\\
+  void _trackUsage(String pageName) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      if (user.email == 'beta@karband.com') {
+        await FirebaseFirestore.instance.collection('app_usage').add({
+          'userId': user.uid,
+          'userEmail': user.email,
+          'pageName': pageName,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+      }
+    } catch (e) {
+      // Fail silently - don't affect user experience
+    }
+  }
+
+// ---------------------------------------------------------------- \\
+
+  @override
+  void initState() {
+    super.initState();
+    // ADDED: Track app launch
+    _trackUsage('app_launch');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<LanguageProvider>(
@@ -391,11 +420,31 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
                 height: 70,
                 child: BottomNavigationBar(
                   currentIndex: _currentIndex,
+
+                  //>>>>>>>>>>>>> tO TRACK USER USAGE <<<<<<<<<<<<<<\\
                   onTap: (index) {
+                    final pageNames = [
+                      'dashboard',
+                      'map',
+                      'create_report',
+                      'completed_reports',
+                      'archived_reports',
+                      'settings'
+                    ];
+                    if (index < pageNames.length) {
+                      _trackUsage(pageNames[index]);
+                    }
+
                     setState(() {
                       _currentIndex = index;
                     });
                   },
+
+                  // onTap: (index) {
+                  //   setState(() {
+                  //     _currentIndex = index;
+                  //   });
+                  // },
                   items: items,
                   selectedItemColor: AppColors.secondary,
                   unselectedItemColor: Colors.grey,
