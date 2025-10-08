@@ -1,3 +1,4 @@
+// --------------------------------------------------
 import 'package:flutter/material.dart';
 import 'package:livework_view/widgets/colors.dart';
 import 'package:provider/provider.dart';
@@ -16,15 +17,82 @@ class ArchivedReportsPage extends StatefulWidget {
 }
 
 class _ArchivedReportsPageState extends State<ArchivedReportsPage> {
+  // LAZY LOADING: ADDED CONTROLLER FOR SCROLL DETECTION
+  final ScrollController _scrollController = ScrollController();
+
+  // LAZY LOADING: ADDED VARIABLES FOR PAGINATION
+  int _currentPage = 0;
+  final int _pageSize = 10;
+  bool _isLoadingMore = false;
+  bool _hasMoreData = true;
+
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
+  void initState() {
+    super.initState();
+    // LAZY LOADING: ADDED SCROLL LISTENER FOR LOADING MORE DATA
+    _scrollController.addListener(_onScroll);
+    _loadInitialData();
+  }
+
+  @override
+  void dispose() {
+    // LAZY LOADING: DISPOSE SCROLL CONTROLLER
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  // LAZY LOADING: NEW METHOD TO HANDLE SCROLL EVENTS
+  void _onScroll() {
+    if (_scrollController.position.pixels ==
+        _scrollController.position.maxScrollExtent) {
+      _loadMoreData();
+    }
+  }
+
+  // LAZY LOADING: NEW METHOD TO LOAD INITIAL DATA
+  void _loadInitialData() {
+    _currentPage = 0;
+    _hasMoreData = true;
     final siteProvider = Provider.of<SiteProvider>(context, listen: false);
     final reportProvider = Provider.of<ReportProvider>(context, listen: false);
 
     if (siteProvider.currentSite != null) {
       reportProvider.loadReports(siteId: siteProvider.currentSite!.id);
     }
+  }
+
+  // LAZY LOADING: NEW METHOD TO LOAD MORE DATA WHEN SCROLLING
+  void _loadMoreData() {
+    if (!_isLoadingMore && _hasMoreData) {
+      setState(() {
+        _isLoadingMore = true;
+      });
+
+      // Simulate loading delay
+      Future.delayed(const Duration(milliseconds: 500), () {
+        setState(() {
+          _currentPage++;
+          _isLoadingMore = false;
+          // LAZY LOADING: CHECK IF WE'VE REACHED THE END OF AVAILABLE DATA
+          // In a real implementation, you would check the actual data count from your API
+          final reportProvider =
+              Provider.of<ReportProvider>(context, listen: false);
+          final allArchivedReports = reportProvider.archivedReports;
+          final totalLoaded = (_currentPage + 1) * _pageSize;
+
+          if (totalLoaded >= allArchivedReports.length) {
+            _hasMoreData = false;
+          }
+        });
+      });
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // LAZY LOADING: RESET PAGINATION WHEN DEPENDENCIES CHANGE
+    _loadInitialData();
   }
 
   @override
@@ -43,6 +111,7 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage> {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
+              _loadInitialData(); // LAZY LOADING: UPDATED TO USE NEW METHOD
               final siteProvider =
                   Provider.of<SiteProvider>(context, listen: false);
               final reportProvider =
@@ -95,11 +164,49 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage> {
 
           final archivedReportsByDate = reportProvider.archivedReportsByDate;
 
+          // LAZY LOADING: GET PAGINATED DATA
+          final paginatedArchivedReports =
+              _getPaginatedArchivedReports(archivedReportsByDate);
+
           return _buildArchivedReportsList(
-              archivedReportsByDate, reportProvider, isAdmin);
+              paginatedArchivedReports, reportProvider, isAdmin);
         },
       ),
     );
+  }
+
+  // LAZY LOADING: NEW METHOD TO GET PAGINATED ARCHIVED REPORTS
+  Map<String, List<ReportModel>> _getPaginatedArchivedReports(
+      Map<String, List<ReportModel>> allArchivedReports) {
+    if (allArchivedReports.isEmpty) return {};
+
+    // LAZY LOADING: CONVERT THE MAP TO A LIST OF ENTRIES FOR PAGINATION
+    final entries = allArchivedReports.entries.toList();
+    final totalItemsToShow = (_currentPage + 1) * _pageSize;
+
+    // LAZY LOADING: CALCULATE HOW MANY DATE GROUPS TO SHOW BASED ON ITEM COUNT
+    int currentItemCount = 0;
+    final Map<String, List<ReportModel>> paginatedResult = {};
+
+    for (final entry in entries) {
+      if (currentItemCount >= totalItemsToShow) break;
+
+      final dateKey = entry.key;
+      final reports = entry.value;
+
+      if (currentItemCount + reports.length <= totalItemsToShow) {
+        // LAZY LOADING: ADD COMPLETE DATE GROUP
+        paginatedResult[dateKey] = reports;
+        currentItemCount += reports.length;
+      } else {
+        // LAZY LOADING: ADD PARTIAL DATE GROUP (LAST ONE)
+        final remainingItems = totalItemsToShow - currentItemCount;
+        paginatedResult[dateKey] = reports.sublist(0, remainingItems);
+        break;
+      }
+    }
+
+    return paginatedResult;
   }
 
   Widget _buildArchivedReportsList(
@@ -109,6 +216,7 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage> {
     if (archivedReportsByDate.isEmpty) {
       return RefreshIndicator(
         onRefresh: () async {
+          _loadInitialData(); // LAZY LOADING: RESET PAGINATION ON REFRESH
           final siteProvider =
               Provider.of<SiteProvider>(context, listen: false);
           if (siteProvider.currentSite != null) {
@@ -128,6 +236,7 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage> {
 
     return RefreshIndicator(
       onRefresh: () async {
+        _loadInitialData(); // LAZY LOADING: RESET PAGINATION ON REFRESH
         final siteProvider = Provider.of<SiteProvider>(context, listen: false);
         if (siteProvider.currentSite != null) {
           await reportProvider.refreshReports(
@@ -135,9 +244,17 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage> {
         }
       },
       child: ListView.builder(
+        // LAZY LOADING: ADDED SCROLL CONTROLLER
+        controller: _scrollController,
         padding: const EdgeInsets.all(16),
-        itemCount: archivedReportsByDate.length,
+        itemCount: archivedReportsByDate.length +
+            (_hasMoreData ? 1 : 0), // LAZY LOADING: ADD LOADING ITEM
         itemBuilder: (context, index) {
+          // LAZY LOADING: CHECK IF THIS IS THE LOADING INDICATOR
+          if (index == archivedReportsByDate.length) {
+            return _buildLoadingIndicator();
+          }
+
           final dateKey = archivedReportsByDate.keys.elementAt(index);
           final reports = archivedReportsByDate[dateKey]!;
 
@@ -145,6 +262,25 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage> {
         },
       ),
     );
+  }
+
+  // LAZY LOADING: NEW METHOD TO BUILD LOADING INDICATOR
+  Widget _buildLoadingIndicator() {
+    return _isLoadingMore
+        ? const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          )
+        : _hasMoreData
+            ? const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Center(
+                  child: Text('Scroll to load more...'),
+                ),
+              )
+            : const SizedBox.shrink();
   }
 
   Widget _buildDateSection(String dateKey, List<ReportModel> reports,
