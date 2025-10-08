@@ -481,7 +481,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
               minHeight: 18,
             ),
             child: Text(
-              count > 99 ? '99+' : count.toString(),
+              count > 5000 ? '5000+' : count.toString(),
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 10,
