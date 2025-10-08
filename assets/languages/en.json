@@ -1,6 +1,6 @@
 {
   "app_title": "LiveWork View",
-  "dashboard": "Tasks & Hazards",
+  "dashboard": "Activity",
   "map": "Map",
   "new_report": "New Report",
   "reports": "Completed",
@@ -79,7 +79,7 @@
   "please_enter_description": "Please enter a description",
   "ok": "OK",
   "image_upload_errors": "Image Upload Errors",
-  "archived": "Archive",
+  "archive": "Archive",
   "archive_report": "Archive Report",
   "unarchive_report": "Unarchive Report",
   "archived_reports": "Archived Reports",
@@ -104,6 +104,6 @@
   "report_updated": "Report updated successfully!",
   "take_photo": "Take Photo",
   "from_gallery": "From Gallery",
-  "no_completed_reports": "No completed reports"
+  "tap_marker_details": "Tap a marker to see details"
 
 }

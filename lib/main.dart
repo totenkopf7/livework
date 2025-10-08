@@ -373,7 +373,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
               List<BottomNavigationBarItem> items = [
                 BottomNavigationBarItem(
                   icon: Icon(Icons.dashboard, size: 28),
-                  label: translate(context, 'Tasks & Hazards'),
+                  label: translate(context, 'dashboard'),
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.map, size: 28),
@@ -402,13 +402,13 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
                   icon: completedCount > 0
                       ? _buildBadgeIcon(completedCount)
                       : Icon(Icons.assignment_turned_in, size: 28),
-                  label: translate(context, 'Completed'),
+                  label: translate(context, 'completed'),
                 ),
                 BottomNavigationBarItem(
                   icon: archivedCount > 0
                       ? _buildBadgeIcon(archivedCount, color: Colors.orange)
                       : Icon(Icons.archive, size: 28),
-                  label: translate(context, 'Archive'),
+                  label: translate(context, 'archive'),
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.settings, size: 28),

@@ -1,9 +1,9 @@
 {
   "app_title": "LiveWork View",
-  "dashboard": "داشبۆرد",
+  "dashboard": "چالاکی",
   "map": "نەخشە",
   "new_report": "ڕاپورتەکا نوی",
-  "reports": "راپورت",
+  "reports": "بدوماهیک هاتی",
   "settings": "رێکختسن",
   "no_access_page": "  بتنێ ئەدمین دشێت ڤی پەیجی بکاربینیت ",
   "no_access": "مۆڵەت پێنەدرایە",
@@ -41,9 +41,9 @@
   "submit_report": "راپورتێ بهنێرە",
   "creating_report": "راپورت یا دهێتە دروست کرن...",
   "report_created": "راپورت ب سەرکەفتیانە هاتە دروست کرن!",
-  "completed_reports": "راپورتێت تمام بوی ",
+  "completed_reports": "بدوماهیک هاتی",
   "in_progress": "کار یێ بەردەوامە",
-  "completed": "بدوماهیک هات",
+  "completed": "بدوماهیک هاتی",
   "all_reports": "هەمی راپورت",
   "filter": "فیلتەر",
   "no_reports": "هیچ راپورتەک بەردەست  نینە",
@@ -95,7 +95,7 @@
   "Gabban": "گەبان",
   "Boilers": "بویلەر",
   "Steam Boilers": "ستیم بویلەر ",
-    "no_reports_found": "چ کار نەهاتینە تومار کرن",
+    "no_reports_found": "چ چالاکی نەهاتینە تومار کرن",
   "Tap_if_controlled": "    تاپ بکە ئەگەر هاتە کونترول کرن",
   "Tasks": " کار",
    "delete_all": "ژێبرنا هەمی ریپورتا",
@@ -103,5 +103,11 @@
    "save_changes": "خەزن کرن",
     "report_updated": "راپورت سەرکەفتیانە ڕاستڤەبوو!",
     "take_photo": "وێنەی بگرە",
-    "choose_from_gallery": "ژ گەلەریێ هەلبژێرە"
+    "choose_from_gallery": "ژ گەلەریێ هەلبژێرە",
+    "no_completed_reports": "هیچ راپورتێت تەمام نەهاتینە تومارکرن",
+    "tap_marker_details": "بۆ بینینا زانیاریێن وردتر لسەر مارکرێ تاپ بکە",
+    "archive": "ئەرشیڤ",
+    "archived_reports": "راپورتێت ئەرشیڤکری"
 }
+
+

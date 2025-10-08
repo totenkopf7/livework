@@ -51,7 +51,7 @@ class _DashboardPageState extends State<DashboardPage> {
     return Scaffold(
       // backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text(translate(context, 'Tasks & Hazards')),
+        title: Text(translate(context, 'dashboard')),
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.secondary,
         actions: [
@@ -94,9 +94,28 @@ class _DashboardPageState extends State<DashboardPage> {
 
           if (reportProvider.isLoading) {
             return const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.background),
-                strokeWidth: 3,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // === LOGO IMAGE ===
+                  Image(
+                    image: AssetImage('assets/images/logo.png'),
+                    width: 90,
+                    height: 90,
+                  ),
+                  SizedBox(height: 20),
+
+                  // === PROGRESS BAR ===
+                  SizedBox(
+                    width: 120,
+                    child: LinearProgressIndicator(
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(AppColors.background),
+                      backgroundColor: Colors.black12,
+                      minHeight: 4,
+                    ),
+                  ),
+                ],
               ),
             );
           }
