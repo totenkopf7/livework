@@ -104,6 +104,8 @@
   "report_updated": "Report updated successfully!",
   "take_photo": "Take Photo",
   "from_gallery": "From Gallery",
-  "tap_marker_details": "Tap a marker to see details"
+  "tap_marker_details": "Tap a marker to see details",
+  "no_reports_with_locations": "No reports with locations available",
+  "reports_refreshed": "Reports refreshed"
 
 }
