@@ -120,7 +120,13 @@
   "delete_all_reports_confirmation": "  تو یێ پشت راستی کو تە دڤێت ئەڤان راپورتا هەمیا ژێ ببەی؟ ",
   "delete_all_reports_for_date": " تو یێ پشت راستی کو تە دڤێت هەمی راپورتا ژێببەی یێن",
    "unarchive_report_confirmation": " تو یێ پشت راستی کو تە دڤێت ئەڤێ راپورتێ ژ ئەرشیفی بینیە دەر؟ ",
-  "archive_report_confirmation": " تو یێ پشت راستی کو تە دڤێت ئەڤێ راپورتێ ئەرشیف بکەی؟ "
+  "archive_report_confirmation": " تو یێ پشت راستی کو تە دڤێت ئەڤێ راپورتێ ئەرشیف بکەی؟ ",
+  "report_archived": " راپورت هاتە ئەرشیف کرن",
+  "report_unarchived": "راپورت هاتە لادان ژ ئەرشیڤێ",
+   "unarchive_report": "ژ ئەرشیڤێ بینیە دەر",
+    "archive_report": "ئەرشیڤ بکە"
+
+
 }
  
 
