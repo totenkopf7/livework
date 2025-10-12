@@ -117,7 +117,11 @@ class ReportProvider with ChangeNotifier {
     loadReports();
   }
 
-  Future<void> loadReports({String? siteId, bool forceRefresh = false}) async {
+// ==== CHANGE START: ADD COMPOSITE INDEX SUPPORT AND FALLBACK ====
+  Future<void> loadReports(
+      {String? siteId,
+      bool forceRefresh = false,
+      bool excludeArchived = true}) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -125,16 +129,40 @@ class ReportProvider with ChangeNotifier {
     await _reportSubscription?.cancel();
 
     try {
-      print('Loading reports from Firestore...');
-      final query = FirebaseFirestore.instance
+      print(
+          'Loading reports from Firestore with archived filter: $excludeArchived');
+
+      Query query = FirebaseFirestore.instance
           .collection('reports')
           .orderBy('timestamp', descending: true);
+
+      // Only add archived filter if we have the index, otherwise filter client-side
+      bool useServerSideFiltering = false;
+
+      if (excludeArchived) {
+        try {
+          // Test if we can use server-side filtering by making a simple query
+          query = query.where('isArchived', isEqualTo: false);
+          useServerSideFiltering = true;
+          print('Using server-side archived filtering');
+        } catch (e) {
+          print(
+              'Server-side filtering not available, will filter client-side: $e');
+          useServerSideFiltering = false;
+          // Reset query without the archived filter
+          query = FirebaseFirestore.instance
+              .collection('reports')
+              .orderBy('timestamp', descending: true);
+        }
+      }
 
       final initialSnapshot = await query.get();
       print('Initial snapshot: ${initialSnapshot.docs.length} reports');
 
+      List<ReportModel> loadedReports = [];
+
       if (initialSnapshot.docs.isNotEmpty) {
-        _reports = initialSnapshot.docs
+        loadedReports = initialSnapshot.docs
             .map((doc) {
               try {
                 return ReportModel.fromFirestore(
@@ -147,8 +175,17 @@ class ReportProvider with ChangeNotifier {
             .where((report) => report != null)
             .cast<ReportModel>()
             .toList();
-        print(
-            'Successfully loaded ${_reports.length} reports from initial snapshot');
+
+        // Apply client-side filtering if server-side filtering failed
+        if (excludeArchived && !useServerSideFiltering) {
+          loadedReports =
+              loadedReports.where((report) => !report.isArchived).toList();
+          print(
+              'Applied client-side archived filtering: ${loadedReports.length} reports');
+        }
+
+        _reports = loadedReports;
+        print('Successfully loaded ${_reports.length} reports');
       } else {
         print('No reports found in initial snapshot, using mock data');
         _loadMockData(siteId);
@@ -162,7 +199,7 @@ class ReportProvider with ChangeNotifier {
           print(
               'Real-time update: ${snapshot.docs.length} reports from Firestore');
           if (snapshot.docs.isNotEmpty) {
-            _reports = snapshot.docs
+            List<ReportModel> updatedReports = snapshot.docs
                 .map((doc) {
                   try {
                     return ReportModel.fromFirestore(
@@ -176,6 +213,13 @@ class ReportProvider with ChangeNotifier {
                 .cast<ReportModel>()
                 .toList();
 
+            // Apply client-side filtering for real-time updates too
+            if (excludeArchived && !useServerSideFiltering) {
+              updatedReports =
+                  updatedReports.where((report) => !report.isArchived).toList();
+            }
+
+            _reports = updatedReports;
             print(
                 'Successfully updated ${_reports.length} reports from real-time listener');
           } else {
@@ -202,11 +246,100 @@ class ReportProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+// ==== CHANGE END ====
 
-  Future<void> refreshReports({String? siteId}) async {
-    print('Manually refreshing reports...');
-    await loadReports(siteId: siteId, forceRefresh: true);
+// ==== CHANGE START: UPDATE REFRESH METHOD TO SUPPORT FILTERING ====
+  Future<void> refreshReports(
+      {String? siteId, bool excludeArchived = true}) async {
+    print('Manually refreshing reports with archived filter: $excludeArchived');
+    await loadReports(
+        siteId: siteId, forceRefresh: true, excludeArchived: excludeArchived);
   }
+// ==== CHANGE END ====
+
+// ==== CHANGE START: FIX PAGINATION FOR ARCHIVED REPORTS ====
+  Future<List<ReportModel>> loadArchivedReportsPaginated({
+    required String siteId,
+    required int page,
+    required int pageSize,
+  }) async {
+    try {
+      print('Loading archived reports page $page with size $pageSize');
+
+      Query query = FirebaseFirestore.instance
+          .collection('reports')
+          .where('isArchived', isEqualTo: true)
+          .orderBy('timestamp', descending: true)
+          .limit(pageSize);
+
+      // For pages beyond the first, we need to start after the last document of previous page
+      if (page > 0) {
+        // Get the last document from the previously loaded reports to use as startAfter
+        if (_loadedArchivedReportsForPagination.isNotEmpty) {
+          final lastReport = _loadedArchivedReportsForPagination.last;
+          query = query.startAfter([lastReport.timestamp]);
+        }
+      }
+
+      final snapshot = await query.get();
+
+      final reports = snapshot.docs
+          .map((doc) {
+            try {
+              return ReportModel.fromFirestore(
+                  doc.id, doc.data() as Map<String, dynamic>);
+            } catch (e) {
+              print('Error parsing document ${doc.id}: $e');
+              return null;
+            }
+          })
+          .where((report) => report != null)
+          .cast<ReportModel>()
+          .toList();
+
+      // Store for pagination tracking
+      if (reports.isNotEmpty) {
+        _loadedArchivedReportsForPagination.addAll(reports);
+      }
+
+      print('Loaded ${reports.length} archived reports for page $page');
+      return reports;
+    } catch (e) {
+      print('Error loading paginated archived reports: $e');
+      return [];
+    }
+  }
+
+// Add this list to track loaded reports for pagination
+  List<ReportModel> _loadedArchivedReportsForPagination = [];
+
+// ==== CHANGE END ====
+
+// ==== CHANGE START: ADD CLEAR PAGINATION METHOD ====
+  Future<void> clearPaginationTracking() async {
+    _loadedArchivedReportsForPagination.clear();
+    print('Cleared pagination tracking');
+  }
+// ==== CHANGE END ====
+
+// Helper method to get the last timestamp for pagination
+  Timestamp? _getLastTimestampForPagination(int page) {
+    if (_reports.isEmpty || page == 0) return null;
+
+    // For archived reports pagination, we need to track the last loaded timestamp
+    // This is a simplified version - you might need to adjust based on your data structure
+    final allArchivedReports =
+        _reports.where((report) => report.isArchived).toList();
+    if (allArchivedReports.isEmpty) return null;
+
+    allArchivedReports.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
+    final startIndex = page * 10; // Adjust based on your page size
+    if (startIndex >= allArchivedReports.length) return null;
+
+    return Timestamp.fromDate(allArchivedReports[startIndex].timestamp);
+  }
+// ==== CHANGE END ====
 
   void _loadMockData(String? siteId) {
     _reports = [

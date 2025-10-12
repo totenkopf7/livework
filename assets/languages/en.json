@@ -106,6 +106,12 @@
   "from_gallery": "From Gallery",
   "tap_marker_details": "Tap a marker to see details",
   "no_reports_with_locations": "No reports with locations available",
-  "reports_refreshed": "Reports refreshed"
+  "reports_refreshed": "Reports refreshed",
+  "load_archived_reports": "Load Archived Reports",
+  "refresh_reports": "Refresh Reports",
+  "show_map_view": "Show Map View",
+  "show_list_view": "Show List View"
+
+  
 
 }

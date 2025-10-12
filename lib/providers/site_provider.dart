@@ -65,6 +65,14 @@ class SiteProvider with ChangeNotifier {
                 },
                 color: 'orange'),
             ZoneModel(
+                id: 'Control Room ',
+                name: {'en': 'Control Room', 'ku': ' کونترول '},
+                color: 'orange'),
+            ZoneModel(
+                id: 'Laboratory ',
+                name: {'en': 'Laboratory', 'ku': ' مختبر '},
+                color: 'orange'),
+            ZoneModel(
                 id: 'Welding Workshop',
                 name: {'en': 'Welding Workshop', 'ku': 'مەخزەنا لەحیمی '},
                 color: 'orange'),
@@ -103,7 +111,7 @@ class SiteProvider with ChangeNotifier {
                 name: {'en': 'Water Unit', 'ku': 'یەکا ئاڤێ'},
                 color: 'blue'),
             ZoneModel(
-                id: 'Outside Generators',
+                id: 'Generators',
                 name: {'en': 'Outside Generators', 'ku': ' موەلیدە'},
                 color: 'red'),
             ZoneModel(
@@ -117,6 +125,14 @@ class SiteProvider with ChangeNotifier {
             ZoneModel(
                 id: 'Steam Boilers',
                 name: {'en': 'Steam Boilers', 'ku': 'ستیم بویلەر '},
+                color: 'orange'),
+            ZoneModel(
+                id: 'Flare Area ',
+                name: {'en': 'Flare Area', 'ku': 'فلێر'},
+                color: 'orange'),
+            ZoneModel(
+                id: 'Across the Site',
+                name: {'en': 'Across the Site', 'ku': ' دەورو بەرێ سایتی '},
                 color: 'orange'),
           ],
         ),

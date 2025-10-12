@@ -28,12 +28,15 @@ class _DashboardPageState extends State<DashboardPage> {
     _loadReports();
   }
 
+// ==== CHANGE START: USE SERVER-SIDE FILTERING FOR PERFORMANCE ====
   Future<void> _loadReports() async {
     final siteProvider = Provider.of<SiteProvider>(context, listen: false);
     final reportProvider = Provider.of<ReportProvider>(context, listen: false);
 
     if (siteProvider.currentSite != null) {
-      await reportProvider.loadReports(siteId: siteProvider.currentSite!.id);
+      // EXCLUDE ARCHIVED REPORTS ON SERVER SIDE FOR BETTER PERFORMANCE
+      await reportProvider.loadReports(
+          siteId: siteProvider.currentSite!.id, excludeArchived: true);
     }
   }
 
@@ -42,10 +45,13 @@ class _DashboardPageState extends State<DashboardPage> {
     final reportProvider = Provider.of<ReportProvider>(context, listen: false);
 
     if (siteProvider.currentSite != null) {
-      await reportProvider.loadReports(siteId: siteProvider.currentSite!.id);
+      // EXCLUDE ARCHIVED REPORTS ON SERVER SIDE FOR BETTER PERFORMANCE
+      await reportProvider.loadReports(
+          siteId: siteProvider.currentSite!.id, excludeArchived: true);
     }
   }
 
+// ==== CHANGE END ====
   @override
   Widget build(BuildContext context) {
     return Scaffold(

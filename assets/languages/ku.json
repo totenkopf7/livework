@@ -110,7 +110,16 @@
     "archived_reports": "راپورتێت ئەرشیڤکری",
     "no_reports_with_locations": "هیچ راپورتێن بەردەست بو جهی نینن",
     "reports_refreshed": "هاتە ریفرێش کرن",
-    "no_archived_reports": "هیچ راپورتێن ئەرشیڤ کری نینن"
+    "no_archived_reports": "هیچ راپورتێن ئەرشیڤ کری نینن",
+    "load_archived_reports": " تاپ بکە بو دیتنا راپورتێن ئەرشیڤکری",
+    "refresh_reports": "ڕیفرێش بکە",
+    "show_map_view": "دیتنا نەخشەی",
+    "show_list_view": "دیتنا لیستێ",
+      "delete_all_reports": "ژێبرنا هەمی راپورتا",
+  "delete_all_reports_confirmation": "  تو یێ پشت راستی کو تە دڤێت ئەڤێ راپورتێ ژێ ببەی؟ ",
+  "delete_all_reports_for_date": " تو یێ پشت راستی کو تە دڤێت هەمی راپورتا ژێببەی یێن",
+   "unarchive_report_confirmation": " تو یێ پشت راستی کو تە دڤێت ئەڤێ راپورتێ ژ ئەرشیفی بینیە دەر؟ ",
+  "archive_report_confirmation": " تو یێ پشت راستی کو تە دڤێت ئەڤێ راپورتێ ئەرشیف بکەی؟ "
 }
 
 
