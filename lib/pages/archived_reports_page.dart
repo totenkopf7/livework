@@ -66,52 +66,56 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
   // REAL LAZY LOADING: LOAD INITIAL BATCH OF ARCHIVED REPORTS
 // ==== CHANGE START: CLEAR PAGINATION TRACKING ON INITIAL LOAD ====
 // REAL LAZY LOADING: LOAD INITIAL BATCH OF ARCHIVED REPORTS
-Future<void> _loadInitialData() async {
-  if (_hasLoadedInitialData) return;
-  
-  setState(() {
-    _isInitialLoading = true;
-  });
+  Future<void> _loadInitialData() async {
+    if (_hasLoadedInitialData) return;
 
-  _currentPage = 0;
-  _hasMoreData = true;
-  _loadedArchivedReports.clear();
-  _paginatedArchivedReportsByDate.clear();
+    setState(() {
+      _isInitialLoading = true;
+    });
 
-  final siteProvider = Provider.of<SiteProvider>(context, listen: false);
-  final reportProvider = Provider.of<ReportProvider>(context, listen: false);
+    _currentPage = 0;
+    _hasMoreData = true;
+    _loadedArchivedReports.clear();
+    _paginatedArchivedReportsByDate.clear();
 
-  if (siteProvider.currentSite != null) {
-    try {
-      // CLEAR PAGINATION TRACKING BEFORE LOADING FRESH DATA
-      await reportProvider.clearPaginationTracking();
-      
-      // LOAD FIRST PAGE OF ARCHIVED REPORTS FROM DATABASE
-      final firstPageReports = await reportProvider.loadArchivedReportsPaginated(
-        siteId: siteProvider.currentSite!.id,
-        page: _currentPage,
-        pageSize: _pageSize,
-      );
+    final siteProvider = Provider.of<SiteProvider>(context, listen: false);
+    final reportProvider = Provider.of<ReportProvider>(context, listen: false);
 
-      setState(() {
-        _loadedArchivedReports = firstPageReports;
-        _paginatedArchivedReportsByDate = _groupReportsByDate(firstPageReports);
-        _hasLoadedInitialData = true;
-        _isInitialLoading = false;
-        _hasMoreData = firstPageReports.length == _pageSize; // More data if we got a full page
-      });
-    } catch (e) {
-      print('Error loading initial archived reports: $e');
+    if (siteProvider.currentSite != null) {
+      try {
+        // CLEAR PAGINATION TRACKING BEFORE LOADING FRESH DATA
+        await reportProvider.clearPaginationTracking();
+
+        // LOAD FIRST PAGE OF ARCHIVED REPORTS FROM DATABASE
+        final firstPageReports =
+            await reportProvider.loadArchivedReportsPaginated(
+          siteId: siteProvider.currentSite!.id,
+          page: _currentPage,
+          pageSize: _pageSize,
+        );
+
+        setState(() {
+          _loadedArchivedReports = firstPageReports;
+          _paginatedArchivedReportsByDate =
+              _groupReportsByDate(firstPageReports);
+          _hasLoadedInitialData = true;
+          _isInitialLoading = false;
+          _hasMoreData = firstPageReports.length ==
+              _pageSize; // More data if we got a full page
+        });
+      } catch (e) {
+        print('Error loading initial archived reports: $e');
+        setState(() {
+          _isInitialLoading = false;
+        });
+      }
+    } else {
       setState(() {
         _isInitialLoading = false;
       });
     }
-  } else {
-    setState(() {
-      _isInitialLoading = false;
-    });
   }
-}
+
 // ==== CHANGE END ====
   // REAL LAZY LOADING: LOAD MORE ARCHIVED REPORTS FROM DATABASE
   Future<void> _loadMoreData() async {
@@ -609,14 +613,36 @@ Future<void> _loadInitialData() async {
     );
   }
 
-  void _unarchiveReport(ReportModel report, ReportProvider reportProvider) {
-    reportProvider.unarchiveReport(report.id);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-            '${translate(context, 'report_unarchived')} "${report.description}"'),
-        backgroundColor: Colors.green,
-      ),
-    );
+// ==== CHANGE START: REFRESH DATA AFTER UNARCHIVING ====
+  void _unarchiveReport(
+      ReportModel report, ReportProvider reportProvider) async {
+    try {
+      await reportProvider.unarchiveReport(report.id);
+
+      // Refresh the archived reports list after successful unarchive
+      setState(() {
+        _hasLoadedInitialData = false; // This will trigger a reload
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              '${translate(context, 'report_unarchived')} "${report.description}"'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // Optional: Wait a bit then reload the data
+      await Future.delayed(const Duration(milliseconds: 500));
+      _loadInitialData();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to unarchive report: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
+// ==== CHANGE END ====
 }

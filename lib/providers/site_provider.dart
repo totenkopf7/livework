@@ -112,7 +112,7 @@ class SiteProvider with ChangeNotifier {
                 color: 'blue'),
             ZoneModel(
                 id: 'Generators',
-                name: {'en': 'Outside Generators', 'ku': ' موەلیدە'},
+                name: {'en': 'Generators', 'ku': ' موەلیدە'},
                 color: 'red'),
             ZoneModel(
                 id: 'Gabban',

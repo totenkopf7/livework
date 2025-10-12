@@ -146,15 +146,18 @@ class _DashboardPageState extends State<DashboardPage> {
             );
           }
 
-          // Only show active reports (not completed and not archived) on dashboard
+          // ==== CHANGE START: VERIFY DASHBOARD FILTERING ====
+// Only show active reports (not completed and not archived) on dashboard
           final filteredReports = reportProvider
               .applyFilters(
                 type: _selectedType,
                 status: _selectedStatus,
               )
               .where((report) =>
-                  report.status != ReportStatus.done && !report.isArchived)
+                  report.status != ReportStatus.done &&
+                  !report.isArchived) // Make sure archived reports are excluded
               .toList();
+// ==== CHANGE END ====
 
           return Column(
             children: [

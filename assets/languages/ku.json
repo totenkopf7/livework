@@ -59,6 +59,7 @@
   "sign_in": "چوونا ژوور",
   "tap_if_completed": "تاپ بکە ئەگەر کار هاتە ئەنجام دان",
   "delete_report": "ژێبرنا راپورتی",
+  "delete_report_confirmation": "تو یێ پشت راستی کو تە دڤێت ئەڤێ راپورتێ ژێ ببەی؟ ",
   "status": "دوخ",
   "view_location_tooltip": "بینینا جهی",
   "image": "وێنە",
@@ -116,10 +117,11 @@
     "show_map_view": "دیتنا نەخشەی",
     "show_list_view": "دیتنا لیستێ",
       "delete_all_reports": "ژێبرنا هەمی راپورتا",
-  "delete_all_reports_confirmation": "  تو یێ پشت راستی کو تە دڤێت ئەڤێ راپورتێ ژێ ببەی؟ ",
+  "delete_all_reports_confirmation": "  تو یێ پشت راستی کو تە دڤێت ئەڤان راپورتا هەمیا ژێ ببەی؟ ",
   "delete_all_reports_for_date": " تو یێ پشت راستی کو تە دڤێت هەمی راپورتا ژێببەی یێن",
    "unarchive_report_confirmation": " تو یێ پشت راستی کو تە دڤێت ئەڤێ راپورتێ ژ ئەرشیفی بینیە دەر؟ ",
   "archive_report_confirmation": " تو یێ پشت راستی کو تە دڤێت ئەڤێ راپورتێ ئەرشیف بکەی؟ "
 }
+ 
 
 
