@@ -124,7 +124,9 @@
   "report_archived": " راپورت هاتە ئەرشیف کرن",
   "report_unarchived": "راپورت هاتە لادان ژ ئەرشیڤێ",
    "unarchive_report": "ژ ئەرشیڤێ بینیە دەر",
-    "archive_report": "ئەرشیڤ بکە"
+    "archive_report": "ئەرشیڤ بکە",
+    "unarchive": "ئەرشیف نەکرن ",
+    "delete": "ژێبرن"
 
 
 }

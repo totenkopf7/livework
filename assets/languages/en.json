@@ -103,14 +103,16 @@
   "save_changes": "Save Changes",
   "report_updated": "Report updated successfully!",
   "take_photo": "Take Photo",
-  "from_gallery": "From Gallery",
+  "choose_from_gallery": "From Gallery",
   "tap_marker_details": "Tap a marker to see details",
   "no_reports_with_locations": "No reports with locations available",
   "reports_refreshed": "Reports refreshed",
   "load_archived_reports": "Load Archived Reports",
   "refresh_reports": "Refresh Reports",
   "show_map_view": "Show Map View",
-  "show_list_view": "Show List View"
+  "show_list_view": "Show List View",
+  "delete": "Delete",
+  "unarchive": "Unarchive",
 
   
 
