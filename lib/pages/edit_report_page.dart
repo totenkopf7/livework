@@ -506,8 +506,8 @@ class _EditReportPageState extends State<EditReportPage> {
                                 child: ElevatedButton.icon(
                                   onPressed: _pickImageFromGallery,
                                   icon: const Icon(Icons.photo_library),
-                                  label:
-                                      Text(translate(context, 'from_gallery')),
+                                  label: Text(translate(
+                                      context, 'choose_from_gallery')),
                                 ),
                               ),
                             ],

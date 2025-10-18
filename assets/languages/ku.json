@@ -72,7 +72,7 @@
   "close": "دائیخستن",
   "no_location_data": "هیچ زانیارییەکێ جهی بەردەست نینە بو ڤێ راپۆرتێ",
   "select_site": "هەلبژارتنا سایتی ",
-  "site_selection_prompt": "ئەمێڵکارییەکانی هەڵبژاردنی سایت لێرە جێبەجێ دەکرێن.",
+  "site_selection_prompt": ".. ل ڤان نێزیکە دێ هێتە زێدە کرن",
   "cancel": "لێڤە بوون",
   "please_select_zone": "هیڤیە جهەکێ بهەلبژێرە",
   "please_enter_description": "هیڤیە وەسفەکێ بنڤیسە",
@@ -97,7 +97,7 @@
   "Boilers": "بویلەر",
   "Steam Boilers": "ستیم بویلەر ",
     "no_reports_found": "چ چالاکی نەهاتینە تومار کرن",
-  "Tap_if_controlled": "    تاپ بکە ئەگەر هاتە کونترول کرن",
+  "tap_if_controlled": "تاپ بکە ئەگەر هاتە کونترول کرن",
   "Tasks": " کار",
    "delete_all": "ژێبرنا هەمی ریپورتا",
    "edit_report": "راستڤەکرنا راپورتێ",
@@ -126,7 +126,8 @@
    "unarchive_report": "ژ ئەرشیڤێ بینیە دەر",
     "archive_report": "ئەرشیڤ بکە",
     "unarchive": "ئەرشیف نەکرن ",
-    "delete": "ژێبرن"
+    "delete": "ژێبرن",
+    "no_images_added": "هیچ وێنەیەک نەهاتینە زێدەکرن"
 
 
 }

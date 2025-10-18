@@ -73,7 +73,7 @@
   "close": "Close",
   "no_location_data": "No location data available for this report",
   "select_site": "Select Site",
-  "site_selection_prompt": "Site selection functionality will be implemented here.",
+  "site_selection_prompt": "Coming Soon ...",
   "cancel": "Cancel",
   "please_select_zone": "Please select a zone",
   "please_enter_description": "Please enter a description",
@@ -112,7 +112,9 @@
   "show_map_view": "Show Map View",
   "show_list_view": "Show List View",
   "delete": "Delete",
-  "unarchive": "Unarchive"
+  "unarchive": "Unarchive",
+  "no_images_added": "No images added"
+
 
   
 
