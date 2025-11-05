@@ -119,8 +119,8 @@ class SiteProvider with ChangeNotifier {
                 name: {'en': 'Gabban', 'ku': 'گەبان'},
                 color: 'orange'),
             ZoneModel(
-                id: 'Boilers',
-                name: {'en': 'Boilers', 'ku': 'بویلەر'},
+                id: 'Burners',
+                name: {'en': 'Burners', 'ku': 'بویلەر'},
                 color: 'orange'),
             ZoneModel(
                 id: 'Steam Boilers',

@@ -144,14 +144,14 @@ class ReportCardWidget extends StatelessWidget {
                 if (report.reporterName != null) ...[
                   Icon(
                     Icons.engineering,
-                    size: 16,
+                    size: 20,
                     color: Colors.grey[600],
                   ),
                   const SizedBox(width: 4),
                   Text(
                     report.reporterName!,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 16,
                       color: Colors.grey[600],
                     ),
                   ),
