@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:livework_view/widgets/animated_drawer_icon.dart';
 import 'package:livework_view/widgets/colors.dart';
+import 'package:livework_view/widgets/safety_drawer_widget.dart';
 import 'package:provider/provider.dart';
 import '../providers/report_provider.dart';
 import '../providers/site_provider.dart';
@@ -29,8 +31,17 @@ class _MapPageState extends State<MapPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const SafetyDrawer(),
       // backgroundColor: AppColors.background,
       appBar: AppBar(
+        leading: Builder(builder: (context) {
+          return AnimatedDrawerIcon(
+            onPressed: () {
+              // This will open the drawer
+              Scaffold.of(context).openDrawer();
+            },
+          );
+        }),
         title: Text(translate(context, 'map')), // UPDATED
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.secondary,

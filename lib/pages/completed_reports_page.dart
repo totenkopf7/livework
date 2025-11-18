@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:livework_view/providers/auth_provider.dart' as livework_auth;
 import 'package:livework_view/providers/language_provider.dart';
+import 'package:livework_view/widgets/animated_drawer_icon.dart';
 import 'package:livework_view/widgets/colors.dart';
+import 'package:livework_view/widgets/safety_drawer_widget.dart';
 import 'package:provider/provider.dart';
 import '../providers/report_provider.dart';
 import '../providers/site_provider.dart';
@@ -36,8 +38,17 @@ class _CompletedReportsPageState extends State<CompletedReportsPage> {
     final isAdmin = authProvider.isAdmin;
 
     return Scaffold(
+      drawer: const SafetyDrawer(),
       // backgroundColor: AppColors.background,
       appBar: AppBar(
+        leading: Builder(builder: (context) {
+          return AnimatedDrawerIcon(
+            onPressed: () {
+              // This will open the drawer
+              Scaffold.of(context).openDrawer();
+            },
+          );
+        }),
         title: Text(translate(context, 'completed_reports')),
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.secondary,

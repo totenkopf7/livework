@@ -48,7 +48,7 @@
   "filter": "فیلتەر",
   "no_reports": "هیچ راپورتەک بەردەست  نینە",
   "no_permission_create_reports": "تە مۆلەتی دروستکردنا راپورتا نینە.",
-  "no_site_selected": "هیچ سایتەک هنەهاتیە هەلبژاردن،  هیڤیە سایتەکی ڕێکبخە بۆ دروست کرنا راپورتێ",
+  "no_site_selected": "هیچ سایتەک نەهاتیە هەلبژاردن،  هیڤیە سایتەکی ڕێکبخە بۆ دروست کرنا راپورتێ",
   "sign_in_to_continue": "چوونەژوورەوە بۆ درێژەدان",
   "email": "ئیمێل",
   "please_enter_email": "هیڤیە ئیمێلی بنڤێسە",
@@ -107,7 +107,40 @@
     "no_completed_reports": "هیچ راپورتێت تەمام نەهاتینە تومارکرن",
     "tap_marker_details": "بۆ بینینا زانیاریێن وردتر لسەر مارکرێ تاپ بکە",
     "archive": "ئەرشیڤ",
-    "archived_reports": "راپورتێت ئەرشیڤکری"
+    "archived_reports": "راپورتێت ئەرشیڤکری",
+    "load_archived_reports": "  راپورتێن ئەرشیڤکری لود بکە ",
+    "no_images_added": "هیچ وێنەیەک نەهاتیە زێدەکرن",
+      "work_reports": "راپورتێن کاری",
+"report_details": "وردەکاریێن راپورتێ",
+
+"report_hazard": "ریپورت کرنا مەترسیێ",
+"report_safety_hazard": " ریپورت کرنا مەترسیێ لناڤ سایتی",
+"hazard_location": "جهێ مەترسیێ",
+"hazard_description": "وەسفا مەترسیێ",
+"hazard_photos": "وێنێ مەترسیێ",
+"pin_hazard_location": "جهێ مەترسیێ لسەر نەخشەی نیشان بکە",
+"hazard_reported_success": "راپورتێ مەترسیێ سەرکەفتیانە هاتە تۆمارکردن!",
+"reporting_hazard": "راپورت کرنا مەترسیێ...",
+"photos_selected": "وێنە هاتنە هەلبژارتن",
+
+"fire_extinguisher_usage": "بکارئینانا بوتڵێ ئاگر ڤەمرێنەر",
+  "report_fire_extinguisher_usage": "راپورتا بکارئینانا بوتڵێ ئاگر ڤەمرێنەر",
+  "location": "جـهـ",
+  "reason_for_usage": "هوکارێن بکارئینانێ",
+  "usage_date": "روژا بکارئینانێ",
+  "please_enter_location": " هیڤیە جهی بنڤێسە ",
+  "please_enter_reason": "هیڤیە هوکاری بنڤیسە",
+  "usage_reported_successfully": " بسەرکەفتییانە هاتە ریپورت کرن  ",
+  "usage_marked_completed": "   کارمەندێ ئاگر ڤەمراندنێ پێ ئاگەهدارە ",
+  "delete_usage_record": "تۆمارێن بکارئینانێ ژێبە",
+  "delete_usage_confirmation": "تو یێ پشت راستی کو تە دڤێت ڤێ تومارێ ژێببەی؟     ",
+  "usage_deleted_successfully": "تۆمارێن بکارئینانێ سەرکەفتیانە هاتە ژێبرن",
+  "no_fire_extinguisher_usage": "هیچ تۆمارێن بکارئینانا بوتڵێن ئاگر ڤەمرێنەر نینن",
+  "mark_done": " باشە ئەس پێ ئاگەهدار بووم ",
+  "pending": "چاڤەڕێ",
+  "notes": "تێبینی",
+  "optional": "هەلبژاردەیی"
+
 }
 
 

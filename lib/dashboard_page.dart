@@ -1,6 +1,9 @@
+// --------------------------------------------------
 import 'package:flutter/material.dart';
 import 'package:livework_view/pages/edit_report_page.dart';
+import 'package:livework_view/widgets/animated_drawer_icon.dart';
 import 'package:livework_view/widgets/colors.dart';
+import 'package:livework_view/widgets/safety_drawer_widget.dart';
 import 'package:provider/provider.dart';
 import 'providers/report_provider.dart';
 import 'providers/site_provider.dart';
@@ -28,12 +31,15 @@ class _DashboardPageState extends State<DashboardPage> {
     _loadReports();
   }
 
+// ==== CHANGE START: USE SERVER-SIDE FILTERING FOR PERFORMANCE ====
   Future<void> _loadReports() async {
     final siteProvider = Provider.of<SiteProvider>(context, listen: false);
     final reportProvider = Provider.of<ReportProvider>(context, listen: false);
 
     if (siteProvider.currentSite != null) {
-      await reportProvider.loadReports(siteId: siteProvider.currentSite!.id);
+      // EXCLUDE ARCHIVED REPORTS ON SERVER SIDE FOR BETTER PERFORMANCE
+      await reportProvider.loadReports(
+          siteId: siteProvider.currentSite!.id, excludeArchived: true);
     }
   }
 
@@ -42,15 +48,27 @@ class _DashboardPageState extends State<DashboardPage> {
     final reportProvider = Provider.of<ReportProvider>(context, listen: false);
 
     if (siteProvider.currentSite != null) {
-      await reportProvider.loadReports(siteId: siteProvider.currentSite!.id);
+      // EXCLUDE ARCHIVED REPORTS ON SERVER SIDE FOR BETTER PERFORMANCE
+      await reportProvider.loadReports(
+          siteId: siteProvider.currentSite!.id, excludeArchived: true);
     }
   }
 
+// ==== CHANGE END ====
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const SafetyDrawer(),
       // backgroundColor: Colors.black,
       appBar: AppBar(
+        leading: Builder(builder: (context) {
+          return AnimatedDrawerIcon(
+            onPressed: () {
+              // This will open the drawer
+              Scaffold.of(context).openDrawer();
+            },
+          );
+        }),
         title: Text(translate(context, 'dashboard')),
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.secondary,
@@ -140,15 +158,18 @@ class _DashboardPageState extends State<DashboardPage> {
             );
           }
 
-          // Only show active reports (not completed and not archived) on dashboard
+          // ==== CHANGE START: VERIFY DASHBOARD FILTERING ====
+// Only show active reports (not completed and not archived) on dashboard
           final filteredReports = reportProvider
               .applyFilters(
                 type: _selectedType,
                 status: _selectedStatus,
               )
               .where((report) =>
-                  report.status != ReportStatus.done && !report.isArchived)
+                  report.status != ReportStatus.done &&
+                  !report.isArchived) // Make sure archived reports are excluded
               .toList();
+// ==== CHANGE END ====
 
           return Column(
             children: [

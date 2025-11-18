@@ -1,3 +1,4 @@
+// --------------------------------------------------
 import 'package:flutter/foundation.dart';
 import '../data/models/report_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -10,6 +11,8 @@ class ReportProvider with ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   livework_auth.AppUser? _currentUser;
+
+  int _archivedReportsCount = 0;
 
   StreamSubscription<QuerySnapshot>? _reportSubscription;
 
@@ -117,7 +120,11 @@ class ReportProvider with ChangeNotifier {
     loadReports();
   }
 
-  Future<void> loadReports({String? siteId, bool forceRefresh = false}) async {
+// ==== CHANGE START: ADD COMPOSITE INDEX SUPPORT AND FALLBACK ====
+  Future<void> loadReports(
+      {String? siteId,
+      bool forceRefresh = false,
+      bool excludeArchived = true}) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -125,16 +132,40 @@ class ReportProvider with ChangeNotifier {
     await _reportSubscription?.cancel();
 
     try {
-      print('Loading reports from Firestore...');
-      final query = FirebaseFirestore.instance
+      print(
+          'Loading reports from Firestore with archived filter: $excludeArchived');
+
+      Query query = FirebaseFirestore.instance
           .collection('reports')
           .orderBy('timestamp', descending: true);
+
+      // Only add archived filter if we have the index, otherwise filter client-side
+      bool useServerSideFiltering = false;
+
+      if (excludeArchived) {
+        try {
+          // Test if we can use server-side filtering by making a simple query
+          query = query.where('isArchived', isEqualTo: false);
+          useServerSideFiltering = true;
+          print('Using server-side archived filtering');
+        } catch (e) {
+          print(
+              'Server-side filtering not available, will filter client-side: $e');
+          useServerSideFiltering = false;
+          // Reset query without the archived filter
+          query = FirebaseFirestore.instance
+              .collection('reports')
+              .orderBy('timestamp', descending: true);
+        }
+      }
 
       final initialSnapshot = await query.get();
       print('Initial snapshot: ${initialSnapshot.docs.length} reports');
 
+      List<ReportModel> loadedReports = [];
+
       if (initialSnapshot.docs.isNotEmpty) {
-        _reports = initialSnapshot.docs
+        loadedReports = initialSnapshot.docs
             .map((doc) {
               try {
                 return ReportModel.fromFirestore(
@@ -147,11 +178,20 @@ class ReportProvider with ChangeNotifier {
             .where((report) => report != null)
             .cast<ReportModel>()
             .toList();
-        print(
-            'Successfully loaded ${_reports.length} reports from initial snapshot');
+
+        // Apply client-side filtering if server-side filtering failed
+        if (excludeArchived && !useServerSideFiltering) {
+          loadedReports =
+              loadedReports.where((report) => !report.isArchived).toList();
+          print(
+              'Applied client-side archived filtering: ${loadedReports.length} reports');
+        }
+
+        _reports = loadedReports;
+        print('Successfully loaded ${_reports.length} reports');
       } else {
         print('No reports found in initial snapshot, using mock data');
-        _loadMockData(siteId);
+        // _loadMockData(siteId);
       }
 
       _isLoading = false;
@@ -162,7 +202,7 @@ class ReportProvider with ChangeNotifier {
           print(
               'Real-time update: ${snapshot.docs.length} reports from Firestore');
           if (snapshot.docs.isNotEmpty) {
-            _reports = snapshot.docs
+            List<ReportModel> updatedReports = snapshot.docs
                 .map((doc) {
                   try {
                     return ReportModel.fromFirestore(
@@ -176,87 +216,183 @@ class ReportProvider with ChangeNotifier {
                 .cast<ReportModel>()
                 .toList();
 
+            // Apply client-side filtering for real-time updates too
+            if (excludeArchived && !useServerSideFiltering) {
+              updatedReports =
+                  updatedReports.where((report) => !report.isArchived).toList();
+            }
+
+            _reports = updatedReports;
             print(
                 'Successfully updated ${_reports.length} reports from real-time listener');
           } else {
             print('No reports found in real-time update, using mock data');
-            _loadMockData(siteId);
+            // _loadMockData(siteId);
           }
         } catch (e) {
           print('Error parsing Firestore data: $e');
           _error = 'Error parsing data: $e';
-          _loadMockData(siteId);
+          // _loadMockData(siteId);
         }
         notifyListeners();
       }, onError: (e) {
         print('Firestore real-time listener error: $e');
         _error = 'Firestore error: $e';
-        _loadMockData(siteId);
+        // _loadMockData(siteId);
         notifyListeners();
       });
     } catch (e) {
       print('Error setting up Firestore connection: $e');
       _error = 'Failed to connect to Firestore: $e';
-      _loadMockData(siteId);
+      // _loadMockData(siteId);
       _isLoading = false;
       notifyListeners();
     }
   }
+// ==== CHANGE END ====
 
-  Future<void> refreshReports({String? siteId}) async {
-    print('Manually refreshing reports...');
-    await loadReports(siteId: siteId, forceRefresh: true);
+// ==== CHANGE START: UPDATE REFRESH METHOD TO SUPPORT FILTERING ====
+  Future<void> refreshReports(
+      {String? siteId, bool excludeArchived = true}) async {
+    print('Manually refreshing reports with archived filter: $excludeArchived');
+    await loadReports(
+        siteId: siteId, forceRefresh: true, excludeArchived: excludeArchived);
+  }
+// ==== CHANGE END ====
+
+// ==== CHANGE START: FIX PAGINATION FOR ARCHIVED REPORTS ====
+  Future<List<ReportModel>> loadArchivedReportsPaginated({
+    required String siteId,
+    required int page,
+    required int pageSize,
+  }) async {
+    try {
+      print('Loading archived reports page $page with size $pageSize');
+
+      Query query = FirebaseFirestore.instance
+          .collection('reports')
+          .where('isArchived', isEqualTo: true)
+          .orderBy('timestamp', descending: true)
+          .limit(pageSize);
+
+      // For pages beyond the first, we need to start after the last document of previous page
+      if (page > 0) {
+        // Get the last document from the previously loaded reports to use as startAfter
+        if (_loadedArchivedReportsForPagination.isNotEmpty) {
+          final lastReport = _loadedArchivedReportsForPagination.last;
+          query = query.startAfter([lastReport.timestamp]);
+        }
+      }
+
+      final snapshot = await query.get();
+
+      final reports = snapshot.docs
+          .map((doc) {
+            try {
+              return ReportModel.fromFirestore(
+                  doc.id, doc.data() as Map<String, dynamic>);
+            } catch (e) {
+              print('Error parsing document ${doc.id}: $e');
+              return null;
+            }
+          })
+          .where((report) => report != null)
+          .cast<ReportModel>()
+          .toList();
+
+      // Store for pagination tracking
+      if (reports.isNotEmpty) {
+        _loadedArchivedReportsForPagination.addAll(reports);
+      }
+
+      print('Loaded ${reports.length} archived reports for page $page');
+      return reports;
+    } catch (e) {
+      print('Error loading paginated archived reports: $e');
+      return [];
+    }
   }
 
-  void _loadMockData(String? siteId) {
-    _reports = [
-      ReportModel(
-        id: 'report_001',
-        siteId: siteId ?? 'site_001',
-        zone: 'zone_a',
-        type: ReportType.work,
-        description: 'Electrical maintenance in building A',
-        photoUrls: [],
-        status: ReportStatus.inProgress,
-        timestamp: DateTime.now()
-            .subtract(const Duration(days: 3)), // Different date for testing
-        reporterName: 'John Doe',
-        reporterId: 'user_123',
-        latitude: 29.7604,
-        longitude: -95.3698,
-      ),
-      ReportModel(
-        id: 'report_002',
-        siteId: siteId ?? 'site_001',
-        zone: 'zone_b',
-        type: ReportType.hazard,
-        description: 'Slippery floor near entrance',
-        photoUrls: [],
-        status: ReportStatus.hazard,
-        timestamp: DateTime.now()
-            .subtract(const Duration(days: 2)), // Different date for testing
-        reporterName: 'Jane Smith',
-        reporterId: 'user_456',
-        latitude: 29.7605,
-        longitude: -95.3699,
-      ),
-      ReportModel(
-        id: 'report_003',
-        siteId: siteId ?? 'site_001',
-        zone: 'zone_c',
-        type: ReportType.work,
-        description: 'Completed plumbing repair',
-        photoUrls: [],
-        status: ReportStatus.done,
-        timestamp: DateTime.now()
-            .subtract(const Duration(days: 1)), // Different date for testing
-        reporterName: 'Bob Wilson',
-        reporterId: 'user_789',
-        latitude: 29.7606,
-        longitude: -95.3700,
-      ),
-    ];
+// Add this list to track loaded reports for pagination
+  List<ReportModel> _loadedArchivedReportsForPagination = [];
+
+// ==== CHANGE END ====
+
+// ==== CHANGE START: ADD CLEAR PAGINATION METHOD ====
+  Future<void> clearPaginationTracking() async {
+    _loadedArchivedReportsForPagination.clear();
+    print('Cleared pagination tracking');
   }
+// ==== CHANGE END ====
+
+// Helper method to get the last timestamp for pagination
+  Timestamp? _getLastTimestampForPagination(int page) {
+    if (_reports.isEmpty || page == 0) return null;
+
+    // For archived reports pagination, we need to track the last loaded timestamp
+    // This is a simplified version - you might need to adjust based on your data structure
+    final allArchivedReports =
+        _reports.where((report) => report.isArchived).toList();
+    if (allArchivedReports.isEmpty) return null;
+
+    allArchivedReports.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
+    final startIndex = page * 10; // Adjust based on your page size
+    if (startIndex >= allArchivedReports.length) return null;
+
+    return Timestamp.fromDate(allArchivedReports[startIndex].timestamp);
+  }
+// ==== CHANGE END ====
+
+  // void _loadMockData(String? siteId) {
+  //   _reports = [
+  //     ReportModel(
+  //       id: 'report_001',
+  //       siteId: siteId ?? 'site_001',
+  //       zone: 'zone_a',
+  //       type: ReportType.work,
+  //       description: 'Electrical maintenance in building A',
+  //       photoUrls: [],
+  //       status: ReportStatus.inProgress,
+  //       timestamp: DateTime.now()
+  //           .subtract(const Duration(days: 3)), // Different date for testing
+  //       reporterName: 'John Doe',
+  //       reporterId: 'user_123',
+  //       latitude: 29.7604,
+  //       longitude: -95.3698,
+  //     ),
+  //     ReportModel(
+  //       id: 'report_002',
+  //       siteId: siteId ?? 'site_001',
+  //       zone: 'zone_b',
+  //       type: ReportType.hazard,
+  //       description: 'Slippery floor near entrance',
+  //       photoUrls: [],
+  //       status: ReportStatus.hazard,
+  //       timestamp: DateTime.now()
+  //           .subtract(const Duration(days: 2)), // Different date for testing
+  //       reporterName: 'Jane Smith',
+  //       reporterId: 'user_456',
+  //       latitude: 29.7605,
+  //       longitude: -95.3699,
+  //     ),
+  //     ReportModel(
+  //       id: 'report_003',
+  //       siteId: siteId ?? 'site_001',
+  //       zone: 'zone_c',
+  //       type: ReportType.work,
+  //       description: 'Completed plumbing repair',
+  //       photoUrls: [],
+  //       status: ReportStatus.done,
+  //       timestamp: DateTime.now()
+  //           .subtract(const Duration(days: 1)), // Different date for testing
+  //       reporterName: 'Bob Wilson',
+  //       reporterId: 'user_789',
+  //       latitude: 29.7606,
+  //       longitude: -95.3700,
+  //     ),
+  //   ];
+  // }
 
   Future<void> createReport({
     required String siteId,
@@ -397,38 +533,103 @@ class ReportProvider with ChangeNotifier {
     }
   }
 
+// ==== CHANGE START: FIX UNARCHIVE TO WORK WITH PAGINATED DATA ====
   Future<void> unarchiveReport(String reportId) async {
     try {
-      final reportIndex =
-          _reports.indexWhere((report) => report.id == reportId);
+      print('Attempting to unarchive report: $reportId');
+
+      // First, try to find the report in the currently loaded reports
+      int reportIndex = _reports.indexWhere((report) => report.id == reportId);
+
+      // If not found in loaded reports, we need to fetch it from Firestore
+      if (reportIndex == -1) {
+        print('Report not found in loaded reports, fetching from Firestore...');
+        try {
+          final docSnapshot = await FirebaseFirestore.instance
+              .collection('reports')
+              .doc(reportId)
+              .get();
+
+          if (docSnapshot.exists) {
+            final report = ReportModel.fromFirestore(
+                reportId, docSnapshot.data() as Map<String, dynamic>);
+            // Add the report to our local list
+            _reports.add(report);
+            reportIndex = _reports.length - 1;
+            print('Fetched report from Firestore: ${report.description}');
+          } else {
+            print('Report not found in Firestore: $reportId');
+            _error = 'Report not found in database: $reportId';
+            notifyListeners();
+            return;
+          }
+        } catch (e) {
+          print('Error fetching report from Firestore: $e');
+          _error = 'Error fetching report: $e';
+          notifyListeners();
+          return;
+        }
+      }
+
       if (reportIndex != -1) {
-        final updatedReport = _reports[reportIndex].copyWith(
+        final originalReport = _reports[reportIndex];
+        print('Found report to unarchive: ${originalReport.description}');
+        print(
+            'Current status: ${originalReport.status}, isArchived: ${originalReport.isArchived}');
+
+        // Create unarchived report
+        final updatedReport = originalReport.copyWith(
           isArchived: false,
           archivedDate: null,
         );
+
         _reports[reportIndex] = updatedReport;
 
+        // UPDATE ARCHIVED COUNT
+        _archivedReportsCount--;
+        if (_archivedReportsCount < 0) _archivedReportsCount = 0;
+
+        print(
+            'Updated report - isArchived: ${updatedReport.isArchived}, status: ${updatedReport.status}');
+        print('New archived count: $_archivedReportsCount');
+
         try {
+          final updateData = {
+            'isArchived': false,
+            'archivedDate': null,
+          };
+
+          print('Updating Firestore with: $updateData');
+
           await FirebaseFirestore.instance
               .collection('reports')
               .doc(reportId)
-              .update({
-            'isArchived': false,
-            'archivedDate': null,
-          });
-          print('Report unarchived in Firestore: $reportId');
+              .update(updateData);
+
+          print('Successfully unarchived report in Firestore: $reportId');
+
+          // If we're using paginated data, we might need to refresh the archived reports list
+          // This ensures the UI updates properly
+          notifyListeners();
         } catch (e) {
           print('Error unarchiving report in Firestore: $e');
           _error = 'Failed to unarchive report in cloud: $e';
+          // Revert the change if Firestore update fails
+          _reports[reportIndex] = originalReport;
+          _archivedReportsCount++; // Revert count
+          print('Reverted changes due to Firestore error');
+          notifyListeners();
         }
 
-        notifyListeners();
+        print('Notified listeners of unarchive change');
       }
     } catch (e) {
+      print('Unexpected error in unarchiveReport: $e');
       _error = 'Failed to unarchive report: $e';
       notifyListeners();
     }
   }
+// ==== CHANGE END ====
 
   Future<void> deleteArchivedReport(String reportId) async {
     try {

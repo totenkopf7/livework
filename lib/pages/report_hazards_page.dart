@@ -1,4 +1,4 @@
-// UPDATED: lib/report_creation_page.dart
+// NEW: lib/report_hazards_page.dart
 import 'package:flutter/material.dart';
 import 'package:livework_view/widgets/animated_drawer_icon.dart';
 import 'package:livework_view/widgets/colors.dart';
@@ -9,26 +9,24 @@ import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:image/image.dart' as img;
-import 'providers/report_provider.dart';
-import 'providers/site_provider.dart';
-import 'providers/auth_provider.dart' as livework_auth;
-import 'data/models/report_model.dart';
-import 'widgets/custom_map_widget.dart';
-import 'helpers/localization_helper.dart'; // ADDED
+import 'package:livework_view/providers/report_provider.dart';
+import 'package:livework_view/providers/site_provider.dart';
+import 'package:livework_view/data/models/report_model.dart';
+import 'package:livework_view/widgets/custom_map_widget.dart';
+import 'package:livework_view/helpers/localization_helper.dart';
 
-class ReportCreationPage extends StatefulWidget {
-  const ReportCreationPage({Key? key}) : super(key: key);
+class ReportHazardsPage extends StatefulWidget {
+  const ReportHazardsPage({Key? key}) : super(key: key);
 
   @override
-  State<ReportCreationPage> createState() => _ReportCreationPageState();
+  State<ReportHazardsPage> createState() => _ReportHazardsPageState();
 }
 
-class _ReportCreationPageState extends State<ReportCreationPage> {
+class _ReportHazardsPageState extends State<ReportHazardsPage> {
   final _formKey = GlobalKey<FormState>();
   final _descriptionController = TextEditingController();
   final _imagePicker = ImagePicker();
 
-  ReportType _selectedType = ReportType.work;
   String _selectedZone = '';
   List<XFile> _selectedImages = [];
   bool _isSubmitting = false;
@@ -58,10 +56,7 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
       {int maxSizeKB = 200}) async {
     try {
       final bytes = await imageFile.readAsBytes();
-
-      if (bytes.lengthInBytes <= maxSizeKB * 1024) {
-        return bytes;
-      }
+      if (bytes.lengthInBytes <= maxSizeKB * 1024) return bytes;
 
       final image = img.decodeImage(bytes);
       if (image == null) return bytes;
@@ -88,7 +83,6 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
               img.copyResize(resizedImage, width: newWidth, height: newHeight);
           compressedBytes =
               Uint8List.fromList(img.encodeJpg(resizedImage, quality: quality));
-
           scaleFactor -= 0.1;
         }
       }
@@ -151,16 +145,12 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
     });
   }
 
-  Future<void> _submitReport() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+  Future<void> _submitHazard() async {
+    if (!_formKey.currentState!.validate()) return;
 
     if (_selectedZone.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(translate(
-                context, 'please_select_zone'))), // UPDATED: Use translation
+        SnackBar(content: Text(translate(context, 'please_select_zone'))),
       );
       return;
     }
@@ -177,9 +167,7 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
 
       if (siteProvider.currentSite == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(translate(
-                  context, 'no_site_selected'))), // UPDATED: Use translation
+          SnackBar(content: Text(translate(context, 'no_site_selected'))),
         );
         return;
       }
@@ -190,27 +178,16 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
       for (XFile image in _selectedImages) {
         try {
           imageIndex++;
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                  'Processing image $imageIndex/${_selectedImages.length}'),
-              duration: const Duration(seconds: 1),
-            ),
-          );
-
           if (kIsWeb) {
             final compressedBytes = await _compressImage(image, maxSizeKB: 200);
             final base64String = base64Encode(compressedBytes);
             photoUrls.add('data:image/jpeg;base64,$base64String');
           } else {
             final compressedBytes = await _compressImage(image, maxSizeKB: 200);
-
             final tempDir = Directory.systemTemp;
             final tempFile = File(
                 '${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}_$imageIndex.jpg');
             await tempFile.writeAsBytes(compressedBytes);
-
             photoUrls.add(tempFile.path);
           }
         } catch (e) {
@@ -222,8 +199,8 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
       if (photoUrls.isEmpty && _selectedImages.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content:
-                  Text('Failed to process all images. Report not created.')),
+              content: Text(
+                  'Failed to process all images. Hazard report not created.')),
         );
         return;
       }
@@ -231,7 +208,7 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
       await reportProvider.createReport(
         siteId: siteProvider.currentSite!.id,
         zone: _selectedZone,
-        type: _selectedType,
+        type: ReportType.hazard, // Always hazard for this page
         description: _descriptionController.text,
         photoUrls: photoUrls,
         latitude: null,
@@ -243,22 +220,28 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
       if (_uploadErrors.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(translate(
-                  context, 'report_created'))), // UPDATED: Use translation
+              content: Text(translate(context, 'hazard_reported_success'))),
         );
+
+        // Clear form after successful submission
+        _descriptionController.clear();
+        setState(() {
+          _selectedImages.clear();
+          _mapX = null;
+          _mapY = null;
+        });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-                'Report created with ${_uploadErrors.length} image errors'),
+                'Hazard reported with ${_uploadErrors.length} image errors'),
             action: SnackBarAction(
               label: 'Details',
               onPressed: () {
                 showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: Text(translate(context,
-                        'image_upload_errors')), // UPDATED: Use translation
+                    title: Text(translate(context, 'image_upload_errors')),
                     content: SingleChildScrollView(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,8 +253,7 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: Text(translate(
-                            context, 'ok')), // UPDATED: Use translation
+                        child: Text(translate(context, 'ok')),
                       ),
                     ],
                   ),
@@ -281,16 +263,9 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
           ),
         );
       }
-
-      _descriptionController.clear();
-      setState(() {
-        _selectedImages.clear();
-        _mapX = null;
-        _mapY = null;
-      });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error creating report: $e')),
+        SnackBar(content: Text('Error reporting hazard: $e')),
       );
     } finally {
       setState(() {
@@ -301,49 +276,15 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider =
-        Provider.of<livework_auth.LiveWorkAuthProvider>(context);
-
-    if (!authProvider.isAdmin) {
-      return Scaffold(
-        drawer: const SafetyDrawer(),
-        appBar: AppBar(
-          leading: Builder(builder: (context) {
-            return AnimatedDrawerIcon(
-              onPressed: () {
-                // This will open the drawer
-                Scaffold.of(context).openDrawer();
-              },
-            );
-          }),
-          title: Text(
-              translate(context, 'create_report')), // UPDATED: Use translation
-          backgroundColor: AppColors.background,
-          foregroundColor: AppColors.secondary,
-        ),
-        body: Center(
-          child: Text(
-            translate(context,
-                'no_permission_create_reports'), // UPDATED: Use translation
-            style: TextStyle(fontSize: 16, color: Colors.red),
-          ),
-        ),
-      );
-    }
-
     return Scaffold(
-      drawer: const SafetyDrawer(),
+      // drawer: const SafetyDrawer(),
       appBar: AppBar(
-        leading: Builder(builder: (context) {
-          return AnimatedDrawerIcon(
-            onPressed: () {
-              // This will open the drawer
-              Scaffold.of(context).openDrawer();
-            },
-          );
-        }),
-        title: Text(
-            translate(context, 'create_report')), // UPDATED: Use translation
+        // leading: Builder(builder: (context) {
+        //   return AnimatedDrawerIcon(
+        //     onPressed: () => Scaffold.of(context).openDrawer(),
+        //   );
+        // }),
+        title: Text(translate(context, 'report_hazard')),
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.secondary,
       ),
@@ -352,8 +293,7 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
           if (siteProvider.currentSite == null) {
             return Center(
               child: Text(
-                translate(
-                    context, 'no_site_selected'), // UPDATED: Use translation
+                translate(context, 'no_site_selected'),
                 style: TextStyle(fontSize: 16),
               ),
             );
@@ -366,56 +306,32 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // HAZARD HEADER
                   Card(
+                    color: Colors.red.shade50,
                     child: Padding(
                       padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Row(
                         children: [
-                          Text(
-                            translate(context,
-                                'report_type'), // UPDATED: Use translation
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                          Icon(Icons.warning, color: Colors.red, size: 32),
+                          SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              translate(context, 'report_safety_hazard'),
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.red.shade800,
+                              ),
                             ),
-                          ),
-                          SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: RadioListTile<ReportType>(
-                                  title: Text(translate(context,
-                                      'work')), // UPDATED: Use translation
-                                  value: ReportType.work,
-                                  groupValue: _selectedType,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _selectedType = value!;
-                                    });
-                                  },
-                                ),
-                              ),
-                              Expanded(
-                                child: RadioListTile<ReportType>(
-                                  title: Text(translate(context,
-                                      'hazard')), // UPDATED: Use translation
-                                  value: ReportType.hazard,
-                                  groupValue: _selectedType,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _selectedType = value!;
-                                    });
-                                  },
-                                ),
-                              ),
-                            ],
                           ),
                         ],
                       ),
                     ),
                   ),
                   SizedBox(height: 16),
+
+                  // HAZARD LOCATION
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
@@ -423,26 +339,31 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            translate(context,
-                                'task_zone'), // UPDATED: Use translation
+                            translate(context, 'hazard_location'),
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+                          SizedBox(height: 8),
+                          // Text(
+                          //   translate(context, 'select_hazard_zone'),
+                          //   style: TextStyle(
+                          //     fontSize: 14,
+                          //     color: Colors.grey[600],
+                          //   ),
+                          // ),
                           SizedBox(height: 12),
                           DropdownButtonFormField<String>(
                             value: _selectedZone.isEmpty ? null : _selectedZone,
                             decoration: InputDecoration(
-                              labelText: translate(context,
-                                  'select_zone'), // UPDATED: Use translation
+                              labelText: translate(context, 'select_zone'),
                               border: OutlineInputBorder(),
                             ),
                             items: siteProvider.currentSite!.zones.map((zone) {
                               return DropdownMenuItem(
                                 value: zone.id,
-                                child: Text(zone
-                                    .getName(context)), // Use localized name
+                                child: Text(zone.getName(context)),
                               );
                             }).toList(),
                             onChanged: (value) {
@@ -452,8 +373,7 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                             },
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return translate(context,
-                                    'please_select_zone'); // UPDATED: Use translation
+                                return translate(context, 'please_select_zone');
                               }
                               return null;
                             },
@@ -463,6 +383,8 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                     ),
                   ),
                   SizedBox(height: 16),
+
+                  // HAZARD DESCRIPTION
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
@@ -470,26 +392,33 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            translate(context,
-                                'description'), // UPDATED: Use translation
+                            translate(context, 'hazard_description'),
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+                          SizedBox(height: 8),
+                          // Text(
+                          //   translate(context, 'describe_hazard_details'),
+                          //   style: TextStyle(
+                          //     fontSize: 14,
+                          //     color: Colors.grey[600],
+                          //   ),
+                          // ),
                           SizedBox(height: 12),
                           TextFormField(
                             controller: _descriptionController,
                             maxLines: 4,
                             decoration: InputDecoration(
-                              labelText: translate(context,
-                                  'describe_work_hazard'), // UPDATED: Use translation
+                              // hintText: translate(
+                              //     context, 'describe_hazard_placeholder'),
                               border: OutlineInputBorder(),
                             ),
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
-                                return translate(context,
-                                    'please_enter_description'); // UPDATED: Use translation
+                                return translate(
+                                    context, 'please_enter_description');
                               }
                               return null;
                             },
@@ -499,6 +428,8 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                     ),
                   ),
                   SizedBox(height: 16),
+
+                  // HAZARD PHOTOS
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
@@ -506,22 +437,20 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            translate(
-                                context, 'photos'), // UPDATED: Use translation
+                            translate(context, 'hazard_photos'),
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          SizedBox(height: 12),
-                          Text(
-                            translate(context,
-                                'upload_photos'), // UPDATED: Use translation
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                            ),
-                          ),
+                          SizedBox(height: 8),
+                          // Text(
+                          //   translate(context, 'upload_hazard_photos_help'),
+                          //   style: TextStyle(
+                          //     fontSize: 14,
+                          //     color: Colors.grey[600],
+                          //   ),
+                          // ),
                           SizedBox(height: 12),
                           Row(
                             children: [
@@ -529,8 +458,11 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                                 child: ElevatedButton.icon(
                                   onPressed: _pickImage,
                                   icon: Icon(Icons.camera_alt),
-                                  label: Text(translate(context,
-                                      'camera')), // UPDATED: Use translation
+                                  label: Text(translate(context, 'take_photo')),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.red.shade600,
+                                    foregroundColor: Colors.white,
+                                  ),
                                 ),
                               ),
                               SizedBox(width: 12),
@@ -538,14 +470,21 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                                 child: ElevatedButton.icon(
                                   onPressed: _pickImageFromGallery,
                                   icon: Icon(Icons.photo_library),
-                                  label: Text(translate(context,
-                                      'gallery')), // UPDATED: Use translation
+                                  label: Text(translate(context, 'gallery')),
                                 ),
                               ),
                             ],
                           ),
                           if (_selectedImages.isNotEmpty) ...[
                             SizedBox(height: 12),
+                            Text(
+                              '${_selectedImages.length} ${translate(context, 'photos_selected')}',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            SizedBox(height: 8),
                             SizedBox(
                               height: 100,
                               child: ListView.builder(
@@ -580,10 +519,8 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                                                   ),
                                                 );
                                               } else {
-                                                return Icon(
-                                                  Icons.image,
-                                                  color: Colors.grey,
-                                                );
+                                                return Icon(Icons.image,
+                                                    color: Colors.grey);
                                               }
                                             },
                                           ),
@@ -623,6 +560,9 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                     ),
                   ),
                   SizedBox(height: 16),
+
+                  // HAZARD MAP LOCATION
+                  // BETTER VERSION: Responsive map size
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
@@ -630,84 +570,90 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            translate(context,
-                                'select_location_map'), // UPDATED: Use translation
+                            translate(context, 'pin_hazard_location'),
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           SizedBox(height: 8),
-                          Text(
-                            translate(context,
-                                'tap_map_location'), // UPDATED: Use translation
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey,
+                          // Text(
+                          //   translate(context, 'tap_to_mark_hazard'),
+                          //   style: TextStyle(
+                          //     fontSize: 14,
+                          //     color: Colors.grey[600],
+                          //   ),
+                          // ),
+                          SizedBox(height: 12),
+                          Container(
+                            height: MediaQuery.of(context).size.height *
+                                0.35, // 35% of screen height
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: CustomMapWidget(
+                                onLocationSelected: _onMapLocationSelected,
+                                markers: _mapX != null && _mapY != null
+                                    ? [
+                                        MapMarker(
+                                          x: _mapX!,
+                                          y: _mapY!,
+                                          color: Colors.red,
+                                          icon: Icons.warning,
+                                          label: translate(
+                                              context, 'hazard_location'),
+                                        ),
+                                      ]
+                                    : [],
+                              ),
                             ),
                           ),
-                          SizedBox(height: 12),
-                          CustomMapWidget(
-                            onLocationSelected: _onMapLocationSelected,
-                            markers: _mapX != null && _mapY != null
-                                ? [
-                                    MapMarker(
-                                      x: _mapX!,
-                                      y: _mapY!,
-                                      color: _selectedType == ReportType.work
-                                          ? Colors.blue
-                                          : Colors.red,
-                                      icon: _selectedType == ReportType.work
-                                          ? Icons.build
-                                          : Icons.warning,
-                                      label: translate(context,
-                                          'selected_location'), // UPDATED: Use translation
-                                    ),
-                                  ]
-                                : [],
-                          ),
-
-                          // This shows the map location in percentage numbers
-                          if (_mapX != null && _mapY != null) ...[
-                            // SizedBox(height: 12),
-                            // Container(
-                            //   padding: EdgeInsets.all(12),
-                            //   decoration: BoxDecoration(
-                            //     color: Colors.green.shade50,
-                            //     borderRadius: BorderRadius.circular(8),
-                            //     border:
-                            //         Border.all(color: Colors.green.shade200),
-                            //   ),
-                            //   child: Row(
-                            //     children: [
-                            //       Icon(
-                            //         Icons.check_circle,
-                            //         color: Colors.green.shade600,
-                            //         size: 20,
-                            //       ),
-                            //       SizedBox(width: 8),
-                            //       Expanded(
-                            //         child: Text(
-                            //           '${translate(context, 'location_selected')}: ${(_mapX! * 100).toStringAsFixed(1)}%, ${(_mapY! * 100).toStringAsFixed(1)}%', // UPDATED: Use translation
-                            //           style: TextStyle(
-                            //             fontSize: 14,
-                            //             color: Colors.green.shade700,
-                            //           ),
-                            //         ),
-                            //       ),
-                            //     ],
-                            //   ),
-                            // ),
-                          ],
+                          // if (_mapX != null && _mapY != null) ...[
+                          //   SizedBox(height: 12),
+                          //   // Container(
+                          //   //   padding: EdgeInsets.all(12),
+                          //   //   decoration: BoxDecoration(
+                          //   //     color: Colors.red.shade50,
+                          //   //     borderRadius: BorderRadius.circular(8),
+                          //   //     border: Border.all(color: Colors.red.shade200),
+                          //   //   ),
+                          //   //   // child: Row(
+                          //   //   //   children: [
+                          //   //   //     Icon(
+                          //   //   //       Icons.location_on,
+                          //   //   //       color: Colors.red.shade600,
+                          //   //   //       size: 20,
+                          //   //   //     ),
+                          //   //   //     SizedBox(width: 8),
+                          //   //   //     // Expanded(
+                          //   //   //     //   child: Text(
+                          //   //   //     //     '${translate(context, 'hazard_located_at')}: ${(_mapX! * 100).toStringAsFixed(1)}%, ${(_mapY! * 100).toStringAsFixed(1)}%',
+                          //   //   //     //     style: TextStyle(
+                          //   //   //     //       fontSize: 14,
+                          //   //   //     //       color: Colors.red.shade700,
+                          //   //   //     //     ),
+                          //   //   //     //   ),
+                          //   //   //     // ),
+                          //   //   //   ],
+                          //   //   // ),
+                          //   // ),
+                          // ],
                         ],
                       ),
                     ),
                   ),
-                  SizedBox(height: 16),
+                  SizedBox(height: 24),
+
+                  // REPORT HAZARD BUTTON
                   ElevatedButton(
-                    onPressed: _isSubmitting ? null : _submitReport,
+                    onPressed: _isSubmitting ? null : _submitHazard,
                     style: ElevatedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: Colors.red.shade600,
+                      foregroundColor: Colors.white,
                     ),
                     child: _isSubmitting
                         ? Row(
@@ -723,13 +669,31 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                                 ),
                               ),
                               SizedBox(width: 12),
-                              Text(translate(context,
-                                  'creating_report')), // UPDATED: Use translation
+                              Text(translate(context, 'reporting_hazard')),
                             ],
                           )
-                        : Text(translate(context,
-                            'submit_report')), // UPDATED: Use translation
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.warning, size: 20),
+                              SizedBox(width: 8),
+                              Text(
+                                translate(context, 'report_hazard'),
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
                   ),
+                  SizedBox(height: 8),
+                  // Text(
+                  //   translate(context, 'hazard_report_help_text'),
+                  //   textAlign: TextAlign.center,
+                  //   style: TextStyle(
+                  //     fontSize: 12,
+                  //     color: Colors.grey[600],
+                  //   ),
+                  // ),
                 ],
               ),
             ),

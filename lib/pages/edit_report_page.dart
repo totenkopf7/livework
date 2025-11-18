@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:livework_view/widgets/animated_drawer_icon.dart';
+import 'package:livework_view/widgets/safety_drawer_widget.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
 import 'dart:convert';
@@ -342,7 +344,16 @@ class _EditReportPageState extends State<EditReportPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const SafetyDrawer(),
       appBar: AppBar(
+        leading: Builder(builder: (context) {
+          return AnimatedDrawerIcon(
+            onPressed: () {
+              // This will open the drawer
+              Scaffold.of(context).openDrawer();
+            },
+          );
+        }),
         title: Text(translate(context, 'edit_report')),
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.secondary,

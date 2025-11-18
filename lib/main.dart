@@ -1,3 +1,4 @@
+// --------------------------------------------------
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -286,7 +287,10 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
 
-      if (user.email == 'beta@karband.com') {
+      if (user.email == 'beta@karband.com' ||
+          user.email == 'milet@karband.com' ||
+          user.email == 'jagar@karband.com' ||
+          user.email == 'aras@karband.com') {
         await FirebaseFirestore.instance.collection('app_usage').add({
           'userId': user.uid,
           'userEmail': user.email,
@@ -334,7 +338,11 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
                   'assets/animations/no.json',
                   width: 100,
                   height: 100,
-                  repeat: true, // or false if you want it to play once
+                  repeat: true,
+                  errorBuilder: (context, error, stackTrace) {
+                    print("Lottie error: $error");
+                    return Icon(Icons.error, color: Colors.red, size: 50);
+                  },
                 ),
                 SizedBox(height: 30),
                 Text(

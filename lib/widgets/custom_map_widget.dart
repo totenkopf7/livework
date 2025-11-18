@@ -1,3 +1,4 @@
+// ==== CHANGE START: FIX MAP MARKER POSITIONING AND RESPONSIVENESS ====
 import 'package:flutter/material.dart';
 
 class CustomMapWidget extends StatefulWidget {
@@ -21,6 +22,8 @@ class CustomMapWidget extends StatefulWidget {
 class _CustomMapWidgetState extends State<CustomMapWidget> {
   bool _isImageLoading = true;
   bool _imageError = false;
+  double _containerWidth = 0;
+  double _containerHeight = 0;
 
   @override
   void initState() {
@@ -50,48 +53,58 @@ class _CustomMapWidgetState extends State<CustomMapWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Stack(
-          children: [
-            AspectRatio(
-              aspectRatio: 4 / 3,
-              child: _isImageLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : Image.asset(
-                      widget.mapImagePath,
-                      width: double.infinity,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return _buildFallbackMap();
-                      },
-                    ),
-            ),
-            ...widget.markers.map((marker) => _buildMarker(marker)),
-            Positioned.fill(
-              child: GestureDetector(
-                onTapDown: (details) {
-                  final RenderBox renderBox =
-                      context.findRenderObject() as RenderBox;
-                  final localPosition =
-                      renderBox.globalToLocal(details.globalPosition);
-                  final size = renderBox.size;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Store container dimensions for accurate marker positioning
+        _containerWidth = constraints.maxWidth;
+        _containerHeight = constraints.maxWidth * 0.75; // 4:3 aspect ratio
 
-                  final x = (localPosition.dx / size.width).clamp(0.0, 1.0);
-                  final y = (localPosition.dy / size.height).clamp(0.0, 1.0);
+        return Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Stack(
+              children: [
+                AspectRatio(
+                  aspectRatio: 4 / 3,
+                  child: _isImageLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : Image.asset(
+                          widget.mapImagePath,
+                          width: double.infinity,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            return _buildFallbackMap();
+                          },
+                        ),
+                ),
+                ...widget.markers.map((marker) => _buildMarker(marker)),
+                Positioned.fill(
+                  child: GestureDetector(
+                    onTapDown: (details) {
+                      final RenderBox renderBox =
+                          context.findRenderObject() as RenderBox;
+                      final localPosition =
+                          renderBox.globalToLocal(details.globalPosition);
+                      final size = renderBox.size;
 
-                  widget.onLocationSelected(x, y);
-                },
-              ),
+                      // FIXED: Calculate accurate coordinates based on actual container size
+                      final x = (localPosition.dx / size.width).clamp(0.0, 1.0);
+                      final y =
+                          (localPosition.dy / size.height).clamp(0.0, 1.0);
+
+                      widget.onLocationSelected(x, y);
+                    },
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -153,9 +166,18 @@ class _CustomMapWidgetState extends State<CustomMapWidget> {
   }
 
   Widget _buildMarker(MapMarker marker) {
+    // FIXED: Calculate marker position based on actual container dimensions
+    // This ensures markers are placed exactly where the user tapped
+    final markerLeft = marker.x * _containerWidth;
+    final markerTop = marker.y * _containerHeight;
+
+    // FIXED: Responsive marker size based on screen width
+    final baseMarkerSize = _containerWidth * 0.04; // 4% of container width
+    final markerSize = baseMarkerSize.clamp(12.0, 24.0); // Min 12px, Max 24px
+
     return Positioned(
-      left: marker.x * (MediaQuery.of(context).size.width - 24),
-      top: marker.y * (MediaQuery.of(context).size.width * 0.75) - 12,
+      left: markerLeft - (markerSize / 2), // Center the marker
+      top: markerTop - (markerSize / 2), // Center the marker
       child: GestureDetector(
         onTap: () {
           if (widget.onMarkerTap != null) {
@@ -163,23 +185,23 @@ class _CustomMapWidgetState extends State<CustomMapWidget> {
           }
         },
         child: Container(
-          width: 12,
-          height: 12,
+          width: markerSize,
+          height: markerSize,
           decoration: BoxDecoration(
             color: marker.color,
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 2),
+            border: Border.all(color: Colors.white, width: markerSize * 0.15),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
+                color: Colors.black.withOpacity(0.4),
+                blurRadius: markerSize * 0.5,
+                offset: Offset(0, markerSize * 0.2),
               ),
             ],
           ),
           child: Icon(
             marker.icon,
-            size: 8,
+            size: markerSize * 0.5, // Icon scales with marker size
             color: Colors.white,
           ),
         ),
@@ -203,3 +225,4 @@ class MapMarker {
     required this.label,
   });
 }
+// ==== CHANGE END ====
