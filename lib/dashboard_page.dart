@@ -4,6 +4,7 @@ import 'package:livework_view/pages/edit_report_page.dart';
 import 'package:livework_view/widgets/animated_drawer_icon.dart';
 import 'package:livework_view/widgets/colors.dart';
 import 'package:livework_view/widgets/safety_drawer_widget.dart';
+import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'providers/report_provider.dart';
 import 'providers/site_provider.dart';
@@ -219,15 +220,35 @@ class _DashboardPageState extends State<DashboardPage> {
     if (reports.isEmpty) {
       return RefreshIndicator(
         onRefresh: _refreshReports,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.8,
-            child: Center(
-              child: Text(
-                translate(context, 'no_reports_found'),
-                style: const TextStyle(fontSize: 16, color: Colors.grey),
-                textAlign: TextAlign.center,
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight,
+              ),
+              child: Padding(
+                padding:
+                    const EdgeInsets.only(top: 50), // adjust vertical position
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      height: 180,
+                      child: Lottie.asset(
+                        'assets/animations/empty_notifications.json',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      translate(context, 'no_reports_found'),
+                      style: const TextStyle(fontSize: 16, color: Colors.grey),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

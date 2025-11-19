@@ -344,16 +344,7 @@ class _EditReportPageState extends State<EditReportPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: const SafetyDrawer(),
       appBar: AppBar(
-        leading: Builder(builder: (context) {
-          return AnimatedDrawerIcon(
-            onPressed: () {
-              // This will open the drawer
-              Scaffold.of(context).openDrawer();
-            },
-          );
-        }),
         title: Text(translate(context, 'edit_report')),
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.secondary,
