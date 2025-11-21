@@ -235,9 +235,9 @@ class _DashboardPageState extends State<DashboardPage> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     SizedBox(
-                      height: 180,
+                      height: 200,
                       child: Lottie.asset(
-                        'assets/animations/empty_notifications.json',
+                        'assets/animations/empty_ghost.json',
                         fit: BoxFit.contain,
                       ),
                     ),
