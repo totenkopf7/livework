@@ -201,7 +201,7 @@ class _CustomMapWidgetState extends State<CustomMapWidget> {
           ),
           child: Icon(
             marker.icon,
-            size: markerSize * 0.5, // Icon scales with marker size
+            size: markerSize * 0.4, // Icon scales with marker size
             color: Colors.white,
           ),
         ),
