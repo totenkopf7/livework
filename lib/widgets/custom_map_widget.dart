@@ -172,7 +172,7 @@ class _CustomMapWidgetState extends State<CustomMapWidget> {
     final markerTop = marker.y * _containerHeight;
 
     // FIXED: Responsive marker size based on screen width
-    final baseMarkerSize = _containerWidth * 0.04; // 4% of container width
+    final baseMarkerSize = _containerWidth * 0.03; // 3% of container width
     final markerSize = baseMarkerSize.clamp(12.0, 24.0); // Min 12px, Max 24px
 
     return Positioned(
@@ -190,7 +190,7 @@ class _CustomMapWidgetState extends State<CustomMapWidget> {
           decoration: BoxDecoration(
             color: marker.color,
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: markerSize * 0.15),
+            border: Border.all(color: Colors.white, width: markerSize * 0.14),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.4),
@@ -201,7 +201,7 @@ class _CustomMapWidgetState extends State<CustomMapWidget> {
           ),
           child: Icon(
             marker.icon,
-            size: markerSize * 0.4, // Icon scales with marker size
+            size: markerSize * 0.5, // Icon scales with marker size
             color: Colors.white,
           ),
         ),
