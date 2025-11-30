@@ -196,6 +196,7 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
 
     return Scaffold(
       drawer: const SafetyDrawer(),
+      backgroundColor: AppColors.archived,
       appBar: AppBar(
         leading: Builder(builder: (context) {
           return AnimatedDrawerIcon(

@@ -39,7 +39,7 @@ class _CompletedReportsPageState extends State<CompletedReportsPage> {
 
     return Scaffold(
       drawer: const SafetyDrawer(),
-      // backgroundColor: AppColors.background,
+      backgroundColor: AppColors.completedReports,
       appBar: AppBar(
         leading: Builder(builder: (context) {
           return AnimatedDrawerIcon(

@@ -139,7 +139,10 @@
   "mark_done": " باشە ئەس پێ ئاگەهدار بووم ",
   "pending": "چاڤەڕێ",
   "notes": "تێبینی",
-  "optional": "هەلبژاردەیی"
+  "optional": "هەلبژاردەیی",
+  "reports_refreshed": " هاتە ریفرێش کرن",
+    "refresh_reports": "ریفرێش بکە ",
+  "show_map_view": "نەخشەی نیشان بدە"
 
 }
 

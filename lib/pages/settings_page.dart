@@ -16,7 +16,7 @@ class SettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: const SafetyDrawer(),
-      // backgroundColor: AppColors.background,
+      backgroundColor: AppColors.settings,
       appBar: AppBar(
         leading: Builder(builder: (context) {
           return AnimatedDrawerIcon(

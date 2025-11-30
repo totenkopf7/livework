@@ -136,7 +136,10 @@
   "mark_done": "Mark Done",
   "pending": "Pending",
   "notes": "Notes",
-  "optional": "Optional"
+  "optional": "Optional",
+  "reports_refreshed": "Reports refreshed",
+  "refresh_reports": "Refresh Reports",
+  "show_map_view": "Show Map View"
 
 }
 

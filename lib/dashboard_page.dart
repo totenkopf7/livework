@@ -60,7 +60,7 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: const SafetyDrawer(),
-      // backgroundColor: Colors.black,
+      backgroundColor: AppColors.dashboard,
       appBar: AppBar(
         leading: Builder(builder: (context) {
           return AnimatedDrawerIcon(

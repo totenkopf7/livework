@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:livework_view/widgets/colors.dart';
 import '../data/models/report_model.dart';
 
 class FilterPanelWidget extends StatelessWidget {
@@ -20,7 +21,7 @@ class FilterPanelWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.filterPanel,
         border: Border(
           bottom: BorderSide(color: Colors.grey.shade300),
         ),
@@ -44,7 +45,8 @@ class FilterPanelWidget extends StatelessWidget {
                   decoration: const InputDecoration(
                     labelText: 'Report Type',
                     border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                   items: [
                     const DropdownMenuItem<ReportType>(
@@ -68,7 +70,8 @@ class FilterPanelWidget extends StatelessWidget {
                   decoration: const InputDecoration(
                     labelText: 'Status',
                     border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                   items: [
                     const DropdownMenuItem<ReportStatus>(
@@ -102,4 +105,4 @@ class FilterPanelWidget extends StatelessWidget {
         return 'Hazard';
     }
   }
-} 
+}

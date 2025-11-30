@@ -32,7 +32,7 @@ class _MapPageState extends State<MapPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: const SafetyDrawer(),
-      // backgroundColor: AppColors.background,
+      backgroundColor: AppColors.map,
       appBar: AppBar(
         leading: Builder(builder: (context) {
           return AnimatedDrawerIcon(
