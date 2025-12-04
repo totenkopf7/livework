@@ -74,20 +74,20 @@ class SiteProvider with ChangeNotifier {
                 name: {'en': 'Laboratory', 'ku': ' مختبر '},
                 color: 'orange'),
             ZoneModel(
-                id: 'Welding Workshop',
-                name: {'en': 'Welding Workshop', 'ku': 'مەخزەنا لەحیمی '},
+                id: 'Merul Factory',
+                name: {'en': 'Merul Factory', 'ku': ' کارگەها میرول '},
                 color: 'orange'),
             ZoneModel(
-                id: 'Loading Area',
-                name: {'en': 'Loading Area', 'ku': 'شەمعە '},
+                id: 'Loading/Unloading Area',
+                name: {'en': 'Loading/Unloading Area', 'ku': 'شەمعە '},
                 color: 'yellow'),
             ZoneModel(
                 id: 'Pre Flash Tower',
                 name: {'en': 'Pre Flash Tower', 'ku': 'یەکا پری فلاش'},
                 color: 'orange'),
             ZoneModel(
-                id: 'Adjacent Yard',
-                name: {'en': 'Adjacent Yard', 'ku': 'ساحا تەصفیێ'},
+                id: 'Adjacent Fabrication Yard',
+                name: {'en': 'Adjacent Fabrication Yard', 'ku': 'ساحا تەصفیێ'},
                 color: 'orange'),
             ZoneModel(
                 id: 'Refinery 2',
@@ -120,12 +120,27 @@ class SiteProvider with ChangeNotifier {
                 name: {'en': 'Gabban', 'ku': 'گەبان'},
                 color: 'orange'),
             ZoneModel(
+                id: 'Security Cabin',
+                name: {'en': 'Security Cabin', 'ku': 'کابینا سکیوریتی'},
+                color: 'orange'),
+            ZoneModel(
+                id: 'Garden',
+                name: {'en': 'Garden', 'ku': 'باخچە'},
+                color: 'orange'),
+            ZoneModel(
                 id: 'Burners',
                 name: {'en': 'Burners', 'ku': 'بویلەر'},
                 color: 'orange'),
             ZoneModel(
                 id: 'Steam Boilers',
                 name: {'en': 'Steam Boilers', 'ku': 'ستیم بویلەر '},
+                color: 'orange'),
+            ZoneModel(
+                id: 'Irani-Kurdish Workers Building',
+                name: {
+                  'en': 'Irani-Kurdish Workers Building',
+                  'ku': 'ئاڤاهیێ کارمەندێن روژهەلاتێ '
+                },
                 color: 'orange'),
             ZoneModel(
                 id: 'Flare Area ',

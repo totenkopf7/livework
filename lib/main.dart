@@ -336,9 +336,9 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
                   CrossAxisAlignment.center, // ⬅️ horizontally center
               children: [
                 Lottie.asset(
-                  'assets/animations/no.json',
-                  width: 100,
-                  height: 100,
+                  'assets/animations/404.json',
+                  width: 300,
+                  height: 300,
                   repeat: true,
                   errorBuilder: (context, error, stackTrace) {
                     print("Lottie error: $error");
