@@ -142,7 +142,30 @@
   "optional": "هەلبژاردەیی",
   "reports_refreshed": " هاتە ریفرێش کرن",
     "refresh_reports": "ریفرێش بکە ",
-  "show_map_view": "نەخشەی نیشان بدە"
+  "show_map_view": "نەخشەی نیشان بدە",
+   "performed_by": "دهێتە ئەنجام دان ژ لایێ",
+  "select_all_that_apply": "ئەنجامدەرێن کاری بهەلبژێرە",
+  "please_select_at_least_one_performer": "  هیڤیە ئەنجامدەرێن کاری بهەلبژێرە  ",
+  "selected": "هاتە هەلبژارتن",
+  "mechanic": "میکانیک",
+  "electrician": "کارەبایی",
+  "fire_unit": "تیما ئاگر ڤەمراندنێ  ",
+  "hse": " تیما سلامەتیێ",
+  "maintenance_supervisor": "سەرپەرشتیارێ صیانێ",
+  "vacuum_unit_crew": "تیما ڤاکیومێ",
+  "atmosphere_unit_crew": "تیما ئەتموسفێرێ",
+  "boilers_burners_crew": "تیما بویلەرا",
+  "welding_crew": "تیما ئاسنگەرا",
+  "lab_crew": "تیما تاقیگەهێ",
+  "water_unit": "یەکا ئاڤێ",
+  "sample_collector": "خڕڤەکەرێ سامپلا",
+  "loading_unloading_crew": "تیما تحمیل و تفریغ ",
+  "housekeeping_crew": "تیما پاقژیێ ",
+  "gardener": "باخچەڤان",
+  "security": "سکیوریتی",
+  "gabban": "گەبان",
+  "third_party_contractor": "  کەسێن ژدەرڤەی سایتی"
+
 
 }
 

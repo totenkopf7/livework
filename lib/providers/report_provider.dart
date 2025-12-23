@@ -55,6 +55,7 @@ class ReportProvider with ChangeNotifier {
     List<String>? photoUrls,
     double? mapX,
     double? mapY,
+    List<String>? performedBy,
   }) async {
     try {
       // Find the report to edit
@@ -77,6 +78,7 @@ class ReportProvider with ChangeNotifier {
         lastEditedAt: DateTime.now(),
         lastEditedBy: _currentUser?.name ?? 'Unknown User',
         editCount: originalReport.editCount + 1,
+        performedBy: performedBy ?? originalReport.performedBy,
       );
 
       // Update in Firestore
@@ -404,6 +406,7 @@ class ReportProvider with ChangeNotifier {
     double? longitude,
     double? mapX,
     double? mapY,
+    List<String>? performedBy = const [],
   }) async {
     try {
       final reporterName = _currentUser?.name ?? 'Unknown User';
@@ -426,6 +429,7 @@ class ReportProvider with ChangeNotifier {
         longitude: longitude,
         mapX: mapX,
         mapY: mapY,
+        performedBy: performedBy ?? [],
       );
 
       try {

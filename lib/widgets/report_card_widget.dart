@@ -158,6 +158,56 @@ class ReportCardWidget extends StatelessWidget {
                 ],
               ],
             ),
+
+            if (report.performedBy.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.groups,
+                    size: 16,
+                    color: Colors.grey[600],
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Wrap(
+                      spacing: 4,
+                      runSpacing: 4,
+                      children: [
+                        Text(
+                          '${translate(context, 'performed_by')}: ', // UPDATED
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        ...report.performedBy.map((performer) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade50,
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: Colors.blue.shade200),
+                            ),
+                            child: Text(
+                              performer,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.blue.shade700,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+
             // REMOVED: Archive date display since we only need creation date
             if (report.photoUrls.isNotEmpty) ...[
               const SizedBox(height: 12),

@@ -24,6 +24,7 @@ class ReportModel {
   final DateTime? lastEditedAt;
   final String? lastEditedBy;
   final int editCount;
+  final List<String> performedBy;
 
   ReportModel({
     required this.id,
@@ -45,6 +46,7 @@ class ReportModel {
     this.lastEditedAt,
     this.lastEditedBy,
     this.editCount = 0,
+    this.performedBy = const [],
   });
 
   Map<String, dynamic> toFirestore() {
@@ -69,6 +71,7 @@ class ReportModel {
           lastEditedAt != null ? Timestamp.fromDate(lastEditedAt!) : null,
       'lastEditedBy': lastEditedBy,
       'editCount': editCount,
+      'performedBy': performedBy,
     };
   }
 
@@ -105,6 +108,7 @@ class ReportModel {
           : null,
       lastEditedBy: data['lastEditedBy'],
       editCount: data['editCount'] ?? 0,
+      performedBy: List<String>.from(data['performedBy'] ?? []),
     );
   }
 
@@ -128,6 +132,7 @@ class ReportModel {
     DateTime? lastEditedAt,
     String? lastEditedBy,
     int? editCount,
+    List<String>? performedBy,
   }) {
     return ReportModel(
       id: id ?? this.id,
@@ -149,6 +154,7 @@ class ReportModel {
       lastEditedAt: lastEditedAt ?? this.lastEditedAt,
       lastEditedBy: lastEditedBy ?? this.lastEditedBy,
       editCount: editCount ?? this.editCount,
+      performedBy: performedBy ?? this.performedBy,
     );
   }
 

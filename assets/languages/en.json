@@ -139,7 +139,31 @@
   "optional": "Optional",
   "reports_refreshed": "Reports refreshed",
   "refresh_reports": "Refresh Reports",
-  "show_map_view": "Show Map View"
+  "show_map_view": "Show Map View",
+  "performed_by": "Performed by",
+  "select_all_that_apply": "Select all that apply (at least one required)",
+  "please_select_at_least_one_performer": "Please select at least one performer",
+  "selected": "Selected",
+  "mechanic": "Mechanic",
+  "electrician": "Electrician",
+  "fire_unit": "Fire Unit",
+  "hse": "HSE",
+  "maintenance_supervisor": "Maintenance Supervisor",
+  "vacuum_unit_crew": "Vacuum Unit Crew",
+  "atmosphere_unit_crew": "Atmosphere Unit Crew",
+  "boilers_burners_crew": "Boilers & Burners Crew",
+  "welding_crew": "Welding Crew",
+  "lab_crew": "Lab Crew",
+  "water_unit": "Water Unit",
+  "sample_collector": "Sample Collector",
+  "loading_unloading_crew": "Loading/Unloading Crew",
+  "housekeeping_crew": "Housekeeping Crew",
+  "gardener": "Gardener",
+  "security": "Security",
+  "gabban": "Gabban",
+  "third_party_contractor": "Third Party Contractor"
+  
+
 
 }
 

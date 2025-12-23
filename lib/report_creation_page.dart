@@ -32,9 +32,11 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
   String _selectedZone = '';
   List<XFile> _selectedImages = [];
   bool _isSubmitting = false;
+  bool _showPerformerError = false;
   double? _mapX;
   double? _mapY;
   List<String> _uploadErrors = [];
+  Set<String> _selectedPerformers = {};
 
   @override
   void initState() {
@@ -49,7 +51,8 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
     if (siteProvider.currentSite != null &&
         siteProvider.currentSite!.zones.isNotEmpty) {
       setState(() {
-        _selectedZone = siteProvider.currentSite!.zones.first.id;
+        // Reset to first zone or empty if we want to force selection
+        _selectedZone = '';
       });
     }
   }
@@ -165,6 +168,31 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
       return;
     }
 
+    // Validate that at least one performer is selected
+    if (_selectedPerformers.isEmpty) {
+      setState(() {
+        _showPerformerError = true;
+      });
+
+      // Scroll to the performer section to make the error visible
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Scrollable.ensureVisible(
+          context,
+          duration: Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(translate(
+              context, 'please_select_at_least_one_performer')), // UPDATED
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isSubmitting = true;
       _uploadErrors.clear();
@@ -238,6 +266,7 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
         longitude: null,
         mapX: _mapX,
         mapY: _mapY,
+        performedBy: _selectedPerformers.toList(),
       );
 
       if (_uploadErrors.isEmpty) {
@@ -287,7 +316,12 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
         _selectedImages.clear();
         _mapX = null;
         _mapY = null;
+        _selectedPerformers.clear(); // ADD THIS LINE
+        _selectedZone = ''; // ADD THIS LINE
+        _showPerformerError = false; // Reset error state
       });
+
+      _loadZones();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error creating report: $e')),
@@ -437,6 +471,9 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                               labelText: translate(context,
                                   'select_zone'), // UPDATED: Use translation
                               border: OutlineInputBorder(),
+                              hintText: _selectedZone.isEmpty
+                                  ? translate(context, 'select_zone')
+                                  : null,
                             ),
                             items: siteProvider.currentSite!.zones.map((zone) {
                               return DropdownMenuItem(
@@ -498,6 +535,127 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                       ),
                     ),
                   ),
+
+                  const SizedBox(height: 16),
+
+// Performed By Section
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${translate(context, 'performed_by')}*', // UPDATED: Use translation
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            translate(
+                                context, 'select_all_that_apply'), // UPDATED
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          SizedBox(height: 12),
+                          // Wrap the checkboxes in a scrollable container
+                          Container(
+                            constraints: BoxConstraints(maxHeight: 200),
+                            child: SingleChildScrollView(
+                              child: Column(
+                                children: [
+                                  _buildPerformerCheckbox(translate(
+                                      context, 'mechanic')), // UPDATED
+                                  _buildPerformerCheckbox(translate(
+                                      context, 'electrician')), // UPDATED
+                                  _buildPerformerCheckbox(translate(
+                                      context, 'fire_unit')), // UPDATED
+                                  _buildPerformerCheckbox(
+                                      translate(context, 'hse')), // UPDATED
+                                  _buildPerformerCheckbox(translate(context,
+                                      'maintenance_supervisor')), // UPDATED
+                                  _buildPerformerCheckbox(translate(
+                                      context, 'vacuum_unit_crew')), // UPDATED
+                                  _buildPerformerCheckbox(translate(context,
+                                      'atmosphere_unit_crew')), // UPDATED
+                                  _buildPerformerCheckbox(translate(context,
+                                      'boilers_burners_crew')), // UPDATED
+                                  _buildPerformerCheckbox(translate(
+                                      context, 'welding_crew')), // UPDATED
+                                  _buildPerformerCheckbox(translate(
+                                      context, 'lab_crew')), // UPDATED
+                                  _buildPerformerCheckbox(translate(
+                                      context, 'water_unit')), // UPDATED
+                                  _buildPerformerCheckbox(translate(
+                                      context, 'sample_collector')), // UPDATED
+                                  _buildPerformerCheckbox(translate(context,
+                                      'loading_unloading_crew')), // UPDATED
+                                  _buildPerformerCheckbox(translate(
+                                      context, 'housekeeping_crew')), // UPDATED
+                                  _buildPerformerCheckbox(translate(
+                                      context, 'gardener')), // UPDATED
+                                  _buildPerformerCheckbox(
+                                      translate(context, 'gabban')), // UPDATED
+                                  _buildPerformerCheckbox(translate(
+                                      context, 'security')), // UPDATED
+                                  _buildPerformerCheckbox(translate(context,
+                                      'third_party_contractor')), // UPDATED
+                                ],
+                              ),
+                            ),
+                          ),
+                          if (_showPerformerError)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                'Please select at least one performer',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.red,
+                                ),
+                              ),
+                            ),
+                          if (_selectedPerformers.isNotEmpty) ...[
+                            SizedBox(height: 12),
+                            Container(
+                              padding: EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.blue.shade200),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${translate(context, 'selected')}:', // UPDATED
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.blue.shade800,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    _selectedPerformers.join(', '),
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.blue.shade700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+
                   SizedBox(height: 16),
                   Card(
                     child: Padding(
@@ -736,6 +894,28 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildPerformerCheckbox(String performer) {
+    return CheckboxListTile(
+      title: Text(performer),
+      value: _selectedPerformers.contains(performer),
+      onChanged: (bool? value) {
+        setState(() {
+          if (value == true) {
+            _selectedPerformers.add(performer);
+          } else {
+            _selectedPerformers.remove(performer);
+          }
+          // Clear error when user selects something
+          if (_selectedPerformers.isNotEmpty) {
+            _showPerformerError = false;
+          }
+        });
+      },
+      dense: true,
+      contentPadding: EdgeInsets.symmetric(horizontal: 4),
     );
   }
 

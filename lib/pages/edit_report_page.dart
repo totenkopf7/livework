@@ -29,6 +29,8 @@ class _EditReportPageState extends State<EditReportPage> {
 
   ReportType _selectedType = ReportType.work;
   String _selectedZone = '';
+  Set<String> _selectedPerformers = {};
+  bool _showPerformerError = false;
 
   // IMAGE MANAGEMENT: Track existing, new, and removed images
   List<String> _existingPhotoUrls = []; // Original images from report
@@ -51,6 +53,7 @@ class _EditReportPageState extends State<EditReportPage> {
     _tempPhotoUrls = List.from(widget.report.photoUrls); // Working copy
     _mapX = widget.report.mapX;
     _mapY = widget.report.mapY;
+    _selectedPerformers = Set.from(widget.report.performedBy ?? []);
   }
 
   @override
@@ -174,6 +177,19 @@ class _EditReportPageState extends State<EditReportPage> {
   // MAIN EDIT SUBMISSION
   Future<void> _submitEdit() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_selectedPerformers.isEmpty) {
+      setState(() {
+        _showPerformerError = true;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text(translate(context, 'please_select_at_least_one_performer')),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
     if (!mounted) return;
 
     setState(() => _isSubmitting = true);
@@ -200,6 +216,7 @@ class _EditReportPageState extends State<EditReportPage> {
         photoUrls: updatedPhotoUrls,
         mapX: _mapX,
         mapY: _mapY,
+        performedBy: _selectedPerformers.toList(),
       );
 
       if (!mounted) return;
