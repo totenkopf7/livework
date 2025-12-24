@@ -602,6 +602,13 @@ class _ReportCreationPageState extends State<ReportCreationPage> {
                                       translate(context, 'gabban')), // UPDATED
                                   _buildPerformerCheckbox(translate(
                                       context, 'security')), // UPDATED
+                                  _buildPerformerCheckbox(
+                                      translate(context, 'painter')), // UPDATED
+                                  _buildPerformerCheckbox(translate(
+                                      context, 'crane_operator')), // UPDATED
+                                  _buildPerformerCheckbox(translate(
+                                      context, 'irani_kurdish_workers')),
+
                                   _buildPerformerCheckbox(translate(context,
                                       'third_party_contractor')), // UPDATED
                                 ],

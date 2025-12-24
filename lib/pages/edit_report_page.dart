@@ -84,6 +84,31 @@ class _EditReportPageState extends State<EditReportPage> {
     }
   }
 
+  // ==== CHANGE START: ADD CHECKBOX HELPER METHOD ====
+// Add this method in your class (similar to create page)
+  Widget _buildPerformerCheckbox(String performer) {
+    return CheckboxListTile(
+      title: Text(performer),
+      value: _selectedPerformers.contains(performer),
+      onChanged: (bool? value) {
+        setState(() {
+          if (value == true) {
+            _selectedPerformers.add(performer);
+          } else {
+            _selectedPerformers.remove(performer);
+          }
+          // Clear error when user selects something
+          if (_selectedPerformers.isNotEmpty) {
+            _showPerformerError = false;
+          }
+        });
+      },
+      dense: true,
+      contentPadding: EdgeInsets.symmetric(horizontal: 4),
+    );
+  }
+// ==== CHANGE END ====
+
   Future<void> _pickImageFromGallery() async {
     try {
       final XFile? image = await _imagePicker.pickImage(
@@ -175,8 +200,11 @@ class _EditReportPageState extends State<EditReportPage> {
   }
 
   // MAIN EDIT SUBMISSION
+// ==== CHANGE START: UPDATE SUBMIT EDIT METHOD ====
   Future<void> _submitEdit() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // ADD VALIDATION: Check that at least one performer is selected
     if (_selectedPerformers.isEmpty) {
       setState(() {
         _showPerformerError = true;
@@ -190,6 +218,7 @@ class _EditReportPageState extends State<EditReportPage> {
       );
       return;
     }
+
     if (!mounted) return;
 
     setState(() => _isSubmitting = true);
@@ -207,7 +236,7 @@ class _EditReportPageState extends State<EditReportPage> {
       // Process images (existing + new - removed)
       final updatedPhotoUrls = await _processImages();
 
-      // Update the report
+      // UPDATE THIS CALL: Include performedBy parameter
       await reportProvider.editReport(
         reportId: widget.report.id,
         description: _descriptionController.text.trim(),
@@ -216,7 +245,7 @@ class _EditReportPageState extends State<EditReportPage> {
         photoUrls: updatedPhotoUrls,
         mapX: _mapX,
         mapY: _mapY,
-        performedBy: _selectedPerformers.toList(),
+        performedBy: _selectedPerformers.toList(), // ADD THIS LINE
       );
 
       if (!mounted) return;
@@ -235,12 +264,7 @@ class _EditReportPageState extends State<EditReportPage> {
       }
     }
   }
-
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
-    );
-  }
+// ==== CHANGE END ====
 
   // IMAGE DISPLAY WIDGET
   Widget _buildImagePreview(String imageUrl, int index, bool isExisting) {
@@ -481,6 +505,123 @@ class _EditReportPageState extends State<EditReportPage> {
 
                   const SizedBox(height: 16),
 
+                  // ==== CHANGE START: ADD PERFORMED BY SECTION TO EDIT FORM ====
+                  const SizedBox(height: 16),
+
+// Performed By Section
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${translate(context, 'performed_by')}*',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            translate(context, 'select_all_that_apply'),
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          SizedBox(height: 12),
+                          Container(
+                            constraints: BoxConstraints(maxHeight: 200),
+                            child: SingleChildScrollView(
+                              child: Column(
+                                children: [
+                                  _buildPerformerCheckbox(
+                                      translate(context, 'mechanic')),
+                                  _buildPerformerCheckbox(
+                                      translate(context, 'electrician')),
+                                  _buildPerformerCheckbox(
+                                      translate(context, 'fire_unit')),
+                                  _buildPerformerCheckbox(
+                                      translate(context, 'hse')),
+                                  _buildPerformerCheckbox(translate(
+                                      context, 'maintenance_supervisor')),
+                                  _buildPerformerCheckbox(
+                                      translate(context, 'vacuum_unit_crew')),
+                                  _buildPerformerCheckbox(translate(
+                                      context, 'atmosphere_unit_crew')),
+                                  _buildPerformerCheckbox(translate(
+                                      context, 'boilers_burners_crew')),
+                                  _buildPerformerCheckbox(
+                                      translate(context, 'welding_crew')),
+                                  _buildPerformerCheckbox(
+                                      translate(context, 'lab_crew')),
+                                  _buildPerformerCheckbox(
+                                      translate(context, 'water_unit')),
+                                  _buildPerformerCheckbox(
+                                      translate(context, 'sample_collector')),
+                                  _buildPerformerCheckbox(translate(
+                                      context, 'loading_unloading_crew')),
+                                  _buildPerformerCheckbox(
+                                      translate(context, 'hygiene_cleaning')),
+                                  _buildPerformerCheckbox(
+                                      translate(context, 'gardener')),
+                                  _buildPerformerCheckbox(
+                                      translate(context, 'painter')),
+                                ],
+                              ),
+                            ),
+                          ),
+                          if (_showPerformerError)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                translate(context,
+                                    'please_select_at_least_one_performer'),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.red,
+                                ),
+                              ),
+                            ),
+                          if (_selectedPerformers.isNotEmpty) ...[
+                            SizedBox(height: 12),
+                            Container(
+                              padding: EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.blue.shade200),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${translate(context, 'selected')}:',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.blue.shade800,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    _selectedPerformers.join(', '),
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.blue.shade700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+// ==== CHANGE END ====
+
                   // IMAGE MANAGEMENT SECTION
                   Card(
                     child: Padding(
@@ -633,4 +774,12 @@ class _EditReportPageState extends State<EditReportPage> {
       ),
     );
   }
+
+  // ==== CHANGE START: ADD _showError METHOD ====
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+// ==== CHANGE END ====
 }

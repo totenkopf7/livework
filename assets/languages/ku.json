@@ -164,8 +164,16 @@
   "gardener": "باخچەڤان",
   "security": "سکیوریتی",
   "gabban": "گەبان",
-  "third_party_contractor": "  کەسێن ژدەرڤەی سایتی"
-
+  "third_party_contractor": "  کەسێن ژدەرڤەی سایتی",
+  "painter": "بویاخچی",
+  "crane_operator": " شوفێرێ کرێنێ",
+  "report_deleted": "راپورت هاتە ژێبرن",
+  "irani_kurdish_workers": "کارمەندێن روژهەلاتا ئیرانێ",
+  "unarchive_report": "  ژ ئەرشیڤی بینە دەر",
+  "archive_report": "ئەرشیڤ بکە",
+  "report_archived": "راپورت هاتە ئەرشیڤ کرن",
+  "report_unarchived": "راپورت هاتە ژێبرن ژ ئەرشیڤێ"
+  
 
 }
 
