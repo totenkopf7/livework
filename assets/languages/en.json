@@ -165,9 +165,26 @@
   "painter": "Painter",
   "crane_operator": "Crane Operator",
   "report_deleted": "Report deleted",
-  "irani_kurdish_workers": "Irani-Kurdish Workers"
+  "irani_kurdish_workers": "Irani-Kurdish Workers",
+  "search_reports": "Search reports...",
+  "clear_filters": "Clear filters",
+  "filter_by_type": "Filter by Type",
+  "filter_by_status": "Filter by Status",
+  "filter_by_zone": "Filter by Zone",
+  "filter_by_performer": "Filter by Performer",
+  "filter_by_date": "Filter by Date",
+  "zone": "Zone",
+  "performer": "Performer",
+  "date": "Date",
+  "results": "Results",
+  "no_results_found": "No results found",
+  "no_performers_found": "No performers found",
+  "select_all": "Select All",
+  "clear_all": "Clear All",
+  "apply": "Apply",
+  "search_zones": "Search zones...",
+  "search_performers": "Search performers..."
+}
   
 
-
-}
 

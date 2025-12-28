@@ -172,9 +172,29 @@
   "unarchive_report": "  ژ ئەرشیڤی بینە دەر",
   "archive_report": "ئەرشیڤ بکە",
   "report_archived": "راپورت هاتە ئەرشیڤ کرن",
-  "report_unarchived": "راپورت هاتە ژێبرن ژ ئەرشیڤێ"
+  "report_unarchived": "راپورت هاتە ژێبرن ژ ئەرشیڤێ",
+
+  "search_reports": "لێگەڕیان ",
+  "clear_filters": "فیلتەرا ژێببە ",
+  "filter_by_type": "فلتەر ب ڕییا جۆری",
+  "filter_by_status": "فلتەر بڕێیا دۆخی",
+  "filter_by_zone": "فلتەر بڕێیا زۆنی",
+  "filter_by_performer": "فلتەر بڕێیا ئەنجامدەرێ کاری",
+  "filter_by_date": "فلتەر بڕێیا بەرواری",
+  "zone": "زۆن",
+  "performer": "ئەنجامدەرێ کاری",
+  "date": "بەروار",
+  "results": "ئەنجام",
+  "no_results_found": "هیچ ئەنجامەک نەهاتە دیتن",
+  "no_performers_found": "هیچ ئەنجامدەرەک نەهاتە دیتن",
+  "select_all": "هەمیا بهەلبژێرە",
+  "clear_all": "هەمیا ژێببە",
+  "apply": "جێبەجێکردن",
+  "search_zones": " گەڕیان ل زۆنی...",
+  "search_performers": "گەڕیان ل ئەنجامدەری ..."
+}
   
 
-}
+
 
 

@@ -1,5 +1,7 @@
 // --------------------------------------------------
+// ENHANCED: lib/pages/archived_reports_page.dart WITH CHECKBOX FILTERS
 import 'package:flutter/material.dart';
+import 'package:livework_view/data/models/site_model.dart';
 import 'package:livework_view/widgets/animated_drawer_icon.dart';
 import 'package:livework_view/widgets/colors.dart';
 import 'package:livework_view/widgets/safety_drawer_widget.dart';
@@ -24,13 +26,25 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
 
   // REAL LAZY LOADING: PAGINATION VARIABLES
   int _currentPage = 0;
-  final int _pageSize = 10; // Load 10 reports at a time
+  final int _pageSize = 10;
   bool _isLoadingMore = false;
   bool _hasMoreData = true;
   bool _hasLoadedInitialData = false;
-  List<ReportModel> _loadedArchivedReports = []; // Only loaded reports
+  List<ReportModel> _loadedArchivedReports = [];
   Map<String, List<ReportModel>> _paginatedArchivedReportsByDate = {};
-  bool _isInitialLoading = false; // Changed to false initially
+  bool _isInitialLoading = false;
+
+  // SEARCH FUNCTIONALITY VARIABLES
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  // MULTI-SELECT FILTER VARIABLES (using Sets for multiple selections)
+  Set<ReportType> _selectedTypeFilters = {};
+  Set<ReportStatus> _selectedStatusFilters = {};
+  Set<String> _selectedZoneFilters = {};
+  Set<String> _selectedPerformerFilters = {};
+  DateTime? _selectedDateFilter;
+  bool _isSearching = false;
 
   @override
   bool get wantKeepAlive => true;
@@ -39,24 +53,51 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    // REMOVED: Auto-load on init - user will manually load
+    // Debounce search to avoid too many rebuilds
+    _searchController.addListener(() {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (_searchController.text != _searchQuery) {
+          setState(() {
+            _searchQuery = _searchController.text;
+            _applyFilters();
+          });
+        }
+      });
+    });
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // REMOVED: Auto-load on dependencies change
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadAvailableZones();
+    });
+  }
+
+  void _loadAvailableZones() {
+    final siteProvider = Provider.of<SiteProvider>(context, listen: false);
+    if (siteProvider.currentSite != null) {
+      setState(() {
+        // Zones are loaded automatically from site provider
+      });
+    }
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
-  // REAL LAZY LOADING: LOAD MORE DATA WHEN SCROLLING TO BOTTOM
   void _onScroll() {
-    if (_scrollController.position.pixels >=
+    if (_searchQuery.isEmpty &&
+        _selectedTypeFilters.isEmpty &&
+        _selectedStatusFilters.isEmpty &&
+        _selectedZoneFilters.isEmpty &&
+        _selectedPerformerFilters.isEmpty &&
+        _selectedDateFilter == null &&
+        _scrollController.position.pixels >=
             _scrollController.position.maxScrollExtent - 100 &&
         !_isLoadingMore &&
         _hasMoreData) {
@@ -64,9 +105,6 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
     }
   }
 
-  // REAL LAZY LOADING: LOAD INITIAL BATCH OF ARCHIVED REPORTS
-// ==== CHANGE START: CLEAR PAGINATION TRACKING ON INITIAL LOAD ====
-// REAL LAZY LOADING: LOAD INITIAL BATCH OF ARCHIVED REPORTS
   Future<void> _loadInitialData() async {
     if (_hasLoadedInitialData) return;
 
@@ -84,10 +122,8 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
 
     if (siteProvider.currentSite != null) {
       try {
-        // CLEAR PAGINATION TRACKING BEFORE LOADING FRESH DATA
         await reportProvider.clearPaginationTracking();
 
-        // LOAD FIRST PAGE OF ARCHIVED REPORTS FROM DATABASE
         final firstPageReports =
             await reportProvider.loadArchivedReportsPaginated(
           siteId: siteProvider.currentSite!.id,
@@ -101,8 +137,7 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
               _groupReportsByDate(firstPageReports);
           _hasLoadedInitialData = true;
           _isInitialLoading = false;
-          _hasMoreData = firstPageReports.length ==
-              _pageSize; // More data if we got a full page
+          _hasMoreData = firstPageReports.length == _pageSize;
         });
       } catch (e) {
         print('Error loading initial archived reports: $e');
@@ -117,8 +152,6 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
     }
   }
 
-// ==== CHANGE END ====
-  // REAL LAZY LOADING: LOAD MORE ARCHIVED REPORTS FROM DATABASE
   Future<void> _loadMoreData() async {
     if (_isLoadingMore || !_hasMoreData) return;
 
@@ -144,8 +177,7 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
           _paginatedArchivedReportsByDate =
               _groupReportsByDate(_loadedArchivedReports);
           _isLoadingMore = false;
-          _hasMoreData = nextPageReports.length ==
-              _pageSize; // More data if we got a full page
+          _hasMoreData = nextPageReports.length == _pageSize;
         });
       } catch (e) {
         print('Error loading more archived reports: $e');
@@ -160,7 +192,6 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
     }
   }
 
-  // GROUP LOADED REPORTS BY DATE FOR DISPLAY
   Map<String, List<ReportModel>> _groupReportsByDate(
       List<ReportModel> reports) {
     final Map<String, List<ReportModel>> grouped = {};
@@ -173,7 +204,6 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
       grouped[dateKey]!.add(report);
     }
 
-    // Sort dates in descending order (newest first)
     final sortedKeys = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
     final sortedMap = <String, List<ReportModel>>{};
     for (final key in sortedKeys) {
@@ -181,6 +211,81 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
     }
 
     return sortedMap;
+  }
+
+  Map<String, List<ReportModel>> _applyFilters() {
+    if (_loadedArchivedReports.isEmpty) return {};
+
+    List<ReportModel> filteredReports = List.from(_loadedArchivedReports);
+
+    // Apply search query filter
+    if (_searchQuery.isNotEmpty) {
+      filteredReports = filteredReports.where((report) {
+        final query = _searchQuery.toLowerCase();
+        return report.description.toLowerCase().contains(query) ||
+            report.zone.toLowerCase().contains(query) ||
+            (report.reporterName?.toLowerCase().contains(query) ?? false) ||
+            report.performedBy
+                .any((performer) => performer.toLowerCase().contains(query));
+      }).toList();
+    }
+
+    // Apply type filters (multiple selection)
+    if (_selectedTypeFilters.isNotEmpty) {
+      filteredReports = filteredReports
+          .where((report) => _selectedTypeFilters.contains(report.type))
+          .toList();
+    }
+
+    // Apply status filters (multiple selection)
+    if (_selectedStatusFilters.isNotEmpty) {
+      filteredReports = filteredReports
+          .where((report) => _selectedStatusFilters.contains(report.status))
+          .toList();
+    }
+
+    // Apply zone filters (multiple selection)
+    if (_selectedZoneFilters.isNotEmpty) {
+      filteredReports = filteredReports
+          .where((report) => _selectedZoneFilters.contains(report.zone))
+          .toList();
+    }
+
+    // Apply performer filters (multiple selection)
+    if (_selectedPerformerFilters.isNotEmpty) {
+      filteredReports = filteredReports
+          .where((report) => report.performedBy.any(
+                (performer) => _selectedPerformerFilters.contains(performer),
+              ))
+          .toList();
+    }
+
+    // Apply date filter (single selection)
+    if (_selectedDateFilter != null) {
+      filteredReports = filteredReports.where((report) {
+        final reportDate = DateTime(
+          report.timestamp.year,
+          report.timestamp.month,
+          report.timestamp.day,
+        );
+        final filterDate = DateTime(
+          _selectedDateFilter!.year,
+          _selectedDateFilter!.month,
+          _selectedDateFilter!.day,
+        );
+        return reportDate == filterDate;
+      }).toList();
+    }
+
+    return _groupReportsByDate(filteredReports);
+  }
+
+  List<String> _getUniquePerformers() {
+    final performers = <String>{};
+    for (final report in _loadedArchivedReports) {
+      performers.addAll(report.performedBy);
+    }
+    return performers.toList()..sort();
   }
 
   String _formatDateKey(DateTime date) {
@@ -193,6 +298,7 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
     final authProvider =
         Provider.of<livework_auth.LiveWorkAuthProvider>(context);
     final isAdmin = authProvider.isAdmin;
+    final siteProvider = Provider.of<SiteProvider>(context);
 
     return Scaffold(
       drawer: const SafetyDrawer(),
@@ -201,7 +307,6 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
         leading: Builder(builder: (context) {
           return AnimatedDrawerIcon(
             onPressed: () {
-              // This will open the drawer
               Scaffold.of(context).openDrawer();
             },
           );
@@ -209,7 +314,20 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
         title: Text(translate(context, 'archived_reports')),
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.secondary,
-        // REMOVED: Refresh button from app bar
+        actions: [
+          // Clear filters button
+          if (_searchQuery.isNotEmpty ||
+              _selectedTypeFilters.isNotEmpty ||
+              _selectedStatusFilters.isNotEmpty ||
+              _selectedZoneFilters.isNotEmpty ||
+              _selectedPerformerFilters.isNotEmpty ||
+              _selectedDateFilter != null)
+            IconButton(
+              icon: const Icon(Icons.filter_alt_off),
+              onPressed: _clearFilters,
+              tooltip: translate(context, 'clear_filters'),
+            ),
+        ],
       ),
       body: Consumer2<ReportProvider, SiteProvider>(
         builder: (context, reportProvider, siteProvider, child) {
@@ -232,15 +350,12 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // === LOGO IMAGE ===
                   Image(
                     image: AssetImage('assets/images/logo.png'),
                     width: 90,
                     height: 90,
                   ),
                   SizedBox(height: 20),
-
-                  // === PROGRESS BAR ===
                   SizedBox(
                     width: 120,
                     child: LinearProgressIndicator(
@@ -274,14 +389,324 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
             );
           }
 
-          return _buildArchivedReportsList(
-              _paginatedArchivedReportsByDate, reportProvider, isAdmin);
+          final filteredReportsByDate = _applyFilters();
+          final hasActiveFilters = _searchQuery.isNotEmpty ||
+              _selectedTypeFilters.isNotEmpty ||
+              _selectedStatusFilters.isNotEmpty ||
+              _selectedZoneFilters.isNotEmpty ||
+              _selectedPerformerFilters.isNotEmpty ||
+              _selectedDateFilter != null;
+
+          return Column(
+            children: [
+              // SEARCH AND FILTERS SECTION
+              _buildSearchAndFiltersSection(siteProvider),
+
+              // SHOW FILTER BADGES IF ANY FILTERS ARE ACTIVE
+              if (hasActiveFilters) _buildActiveFiltersChips(),
+
+              // RESULTS COUNT
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '${translate(context, 'results')}: ${_getTotalFilteredReports(filteredReportsByDate)}',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    if (hasActiveFilters && filteredReportsByDate.isEmpty)
+                      Text(
+                        translate(context, 'no_results_found'),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.orange,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+
+              // REPORTS LIST
+              Expanded(
+                child: _buildArchivedReportsList(
+                  filteredReportsByDate,
+                  reportProvider,
+                  isAdmin,
+                  hasActiveFilters,
+                ),
+              ),
+            ],
+          );
         },
       ),
     );
   }
 
-  // NEW: BUILD LOAD ARCHIVED REPORTS BUTTON
+  Widget _buildSearchAndFiltersSection(SiteProvider siteProvider) {
+    return Card(
+      margin: const EdgeInsets.all(8),
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          children: [
+            // SEARCH BAR
+            TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: translate(context, 'search_reports'),
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {
+                            _searchQuery = '';
+                          });
+                        },
+                      )
+                    : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // FILTERS ROW
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  // Type Filter
+                  _buildFilterChip(
+                    label: translate(context, 'type'),
+                    icon: Icons.category,
+                    onTap: () => _showTypeFilterDialog(),
+                    isActive: _selectedTypeFilters.isNotEmpty,
+                    count: _selectedTypeFilters.length,
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Status Filter
+                  _buildFilterChip(
+                    label: translate(context, 'status'),
+                    icon: Icons.stairs,
+                    onTap: () => _showStatusFilterDialog(),
+                    isActive: _selectedStatusFilters.isNotEmpty,
+                    count: _selectedStatusFilters.length,
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Zone Filter
+                  _buildFilterChip(
+                    label: translate(context, 'zone'),
+                    icon: Icons.location_on,
+                    onTap: () => _showZoneFilterDialog(siteProvider),
+                    isActive: _selectedZoneFilters.isNotEmpty,
+                    count: _selectedZoneFilters.length,
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Performer Filter
+                  _buildFilterChip(
+                    label: translate(context, 'performer'),
+                    icon: Icons.person,
+                    onTap: () => _showPerformerFilterDialog(),
+                    isActive: _selectedPerformerFilters.isNotEmpty,
+                    count: _selectedPerformerFilters.length,
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Date Filter
+                  _buildFilterChip(
+                    label: translate(context, 'date'),
+                    icon: Icons.date_range,
+                    onTap: () => _showDateFilterDialog(),
+                    isActive: _selectedDateFilter != null,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip({
+    required String label,
+    required IconData icon,
+    required VoidCallback onTap,
+    required bool isActive,
+    int? count,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive ? Colors.blue.shade50 : Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isActive ? Colors.blue : Colors.grey.shade300,
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isActive ? Colors.blue : Colors.grey,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: isActive ? Colors.blue : Colors.grey.shade700,
+              ),
+            ),
+            if (count != null && count > 0) ...[
+              const SizedBox(width: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  count.toString(),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActiveFiltersChips() {
+    final chips = <Widget>[];
+
+    if (_searchQuery.isNotEmpty) {
+      chips.add(_buildActiveFilterChip(
+        label: 'Search: "$_searchQuery"',
+        onRemove: () {
+          _searchController.clear();
+          setState(() {
+            _searchQuery = '';
+          });
+        },
+      ));
+    }
+
+    // Type filters
+    for (final type in _selectedTypeFilters) {
+      chips.add(_buildActiveFilterChip(
+        label: 'Type: ${type.name}',
+        onRemove: () {
+          setState(() {
+            _selectedTypeFilters.remove(type);
+          });
+        },
+      ));
+    }
+
+    // Status filters
+    for (final status in _selectedStatusFilters) {
+      chips.add(_buildActiveFilterChip(
+        label: 'Status: ${status.name}',
+        onRemove: () {
+          setState(() {
+            _selectedStatusFilters.remove(status);
+          });
+        },
+      ));
+    }
+
+    // Zone filters
+    for (final zone in _selectedZoneFilters) {
+      chips.add(_buildActiveFilterChip(
+        label: 'Zone: $zone',
+        onRemove: () {
+          setState(() {
+            _selectedZoneFilters.remove(zone);
+          });
+        },
+      ));
+    }
+
+    // Performer filters
+    for (final performer in _selectedPerformerFilters) {
+      chips.add(_buildActiveFilterChip(
+        label: 'Performer: $performer',
+        onRemove: () {
+          setState(() {
+            _selectedPerformerFilters.remove(performer);
+          });
+        },
+      ));
+    }
+
+    // Date filter
+    if (_selectedDateFilter != null) {
+      chips.add(_buildActiveFilterChip(
+        label: 'Date: ${_formatDisplayDate(_selectedDateFilter!)}',
+        onRemove: () {
+          setState(() {
+            _selectedDateFilter = null;
+          });
+        },
+      ));
+    }
+
+    if (chips.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: chips,
+      ),
+    );
+  }
+
+  Widget _buildActiveFilterChip({
+    required String label,
+    required VoidCallback onRemove,
+  }) {
+    return Chip(
+      label: Text(
+        label,
+        style: const TextStyle(fontSize: 12),
+      ),
+      deleteIcon: const Icon(Icons.close, size: 16),
+      onDeleted: onRemove,
+      backgroundColor: Colors.blue.shade50,
+      deleteIconColor: Colors.blue,
+    );
+  }
+
   Widget _buildLoadArchivedReportsButton() {
     return Center(
       child: Column(
@@ -307,25 +732,55 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
   }
 
   Widget _buildArchivedReportsList(
-      Map<String, List<ReportModel>> archivedReportsByDate,
-      ReportProvider reportProvider,
-      bool isAdmin) {
+    Map<String, List<ReportModel>> archivedReportsByDate,
+    ReportProvider reportProvider,
+    bool isAdmin,
+    bool hasActiveFilters,
+  ) {
     if (archivedReportsByDate.isEmpty) {
-      return RefreshIndicator(
-        onRefresh: () async {
-          setState(() {
-            _hasLoadedInitialData = false;
-          });
-          await _loadInitialData();
-        },
-        child: Center(
-          child: Text(
-            translate(context, 'no_archived_reports'),
-            style: const TextStyle(fontSize: 16, color: Colors.grey),
-            textAlign: TextAlign.center,
+      if (_loadedArchivedReports.isEmpty) {
+        return RefreshIndicator(
+          onRefresh: () async {
+            setState(() {
+              _hasLoadedInitialData = false;
+            });
+            await _loadInitialData();
+          },
+          child: Center(
+            child: Text(
+              translate(context, 'no_archived_reports'),
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
           ),
-        ),
-      );
+        );
+      } else if (hasActiveFilters) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.search_off,
+                size: 64,
+                color: Colors.grey[400],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                translate(context, 'no_results_found'),
+                style: const TextStyle(fontSize: 16, color: Colors.grey),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: _clearFilters,
+                child: Text(translate(context, 'clear_filters')),
+              ),
+            ],
+          ),
+        );
+      } else {
+        return const SizedBox.shrink();
+      }
     }
 
     return RefreshIndicator(
@@ -339,10 +794,9 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
         controller: _scrollController,
         padding: const EdgeInsets.all(16),
         itemCount: archivedReportsByDate.length +
-            (_hasMoreData || _isLoadingMore ? 1 : 0),
+            (!hasActiveFilters && (_hasMoreData || _isLoadingMore) ? 1 : 0),
         itemBuilder: (context, index) {
-          // Show loading indicator or load more button at the end
-          if (index == archivedReportsByDate.length) {
+          if (index == archivedReportsByDate.length && !hasActiveFilters) {
             if (_isLoadingMore) {
               return _buildLoadingIndicator();
             } else if (_hasMoreData) {
@@ -414,7 +868,6 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Fixed layout to prevent overflow
             Row(
               children: [
                 Icon(
@@ -497,7 +950,6 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
         final day = int.parse(parts[2]);
         final date = DateTime(year, month, day);
 
-        // Format: 22 September 2025
         final months = [
           'January',
           'February',
@@ -520,6 +972,488 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
     }
 
     return dateKey;
+  }
+
+  String _formatDisplayDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
+  }
+
+  int _getTotalFilteredReports(Map<String, List<ReportModel>> groupedReports) {
+    return groupedReports.values
+        .fold(0, (sum, reports) => sum + reports.length);
+  }
+
+  void _clearFilters() {
+    setState(() {
+      _searchController.clear();
+      _searchQuery = '';
+      _selectedTypeFilters.clear();
+      _selectedStatusFilters.clear();
+      _selectedZoneFilters.clear();
+      _selectedPerformerFilters.clear();
+      _selectedDateFilter = null;
+    });
+  }
+
+// REPLACE THESE FOUR FILTER DIALOG METHODS IN YOUR CODE:
+
+// DIALOGS FOR FILTERS (with checkboxes) - FIXED VERSION
+  Future<void> _showTypeFilterDialog() async {
+    final tempSelectedTypes = Set<ReportType>.from(_selectedTypeFilters);
+
+    final result = await showDialog<Set<ReportType>>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: Text(translate(context, 'filter_by_type')),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Select All / Clear All buttons
+                  Row(
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            tempSelectedTypes.clear();
+                            tempSelectedTypes.addAll(ReportType.values);
+                          });
+                        },
+                        child: Text(translate(context, 'select_all')),
+                      ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            tempSelectedTypes.clear();
+                          });
+                        },
+                        child: Text(translate(context, 'clear_all')),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Checkbox list
+                  Column(
+                    children: ReportType.values.map((type) {
+                      return CheckboxListTile(
+                        title: Text(
+                          type == ReportType.work
+                              ? translate(context, 'work')
+                              : translate(context, 'hazard'),
+                        ),
+                        value: tempSelectedTypes.contains(type),
+                        onChanged: (bool? value) {
+                          setState(() {
+                            if (value == true) {
+                              tempSelectedTypes.add(type);
+                            } else {
+                              tempSelectedTypes.remove(type);
+                            }
+                          });
+                        },
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, null),
+                child: Text(translate(context, 'cancel')),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(
+                      context, Set<ReportType>.from(tempSelectedTypes));
+                },
+                child: Text(translate(context, 'apply')),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        _selectedTypeFilters = result;
+      });
+    }
+  }
+
+  Future<void> _showStatusFilterDialog() async {
+    final tempSelectedStatuses = Set<ReportStatus>.from(_selectedStatusFilters);
+
+    final result = await showDialog<Set<ReportStatus>>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: Text(translate(context, 'filter_by_status')),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Select All / Clear All buttons
+                  Row(
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            tempSelectedStatuses.clear();
+                            tempSelectedStatuses.addAll(ReportStatus.values);
+                          });
+                        },
+                        child: Text(translate(context, 'select_all')),
+                      ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            tempSelectedStatuses.clear();
+                          });
+                        },
+                        child: Text(translate(context, 'clear_all')),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Checkbox list
+                  Column(
+                    children: ReportStatus.values.map((status) {
+                      return CheckboxListTile(
+                        title: Text(_getStatusText(status)),
+                        value: tempSelectedStatuses.contains(status),
+                        onChanged: (bool? value) {
+                          setState(() {
+                            if (value == true) {
+                              tempSelectedStatuses.add(status);
+                            } else {
+                              tempSelectedStatuses.remove(status);
+                            }
+                          });
+                        },
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, null),
+                child: Text(translate(context, 'cancel')),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(
+                      context, Set<ReportStatus>.from(tempSelectedStatuses));
+                },
+                child: Text(translate(context, 'apply')),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        _selectedStatusFilters = result;
+      });
+    }
+  }
+
+  Future<void> _showZoneFilterDialog(SiteProvider siteProvider) async {
+    final tempSelectedZones = Set<String>.from(_selectedZoneFilters);
+    final availableZones = siteProvider.currentSite!.zones;
+
+    final result = await showDialog<Set<String>>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          // Create a filtered list for searching
+          List<ZoneModel> displayedZones = List.from(availableZones);
+
+          return AlertDialog(
+            title: Text(translate(context, 'filter_by_zone')),
+            content: SizedBox(
+              width: double.maxFinite,
+              height: 400,
+              child: Column(
+                children: [
+                  // Search for zones
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: translate(context, 'search_zones'),
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          if (value.isEmpty) {
+                            displayedZones = List.from(availableZones);
+                          } else {
+                            displayedZones = availableZones.where((zone) {
+                              final zoneName =
+                                  zone.getName(context).toLowerCase();
+                              return zoneName.contains(value.toLowerCase());
+                            }).toList();
+                          }
+                        });
+                      },
+                    ),
+                  ),
+
+                  // Select All / Clear All buttons
+                  Row(
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            tempSelectedZones.clear();
+                            for (final zone in availableZones) {
+                              tempSelectedZones.add(zone.id);
+                            }
+                          });
+                        },
+                        child: Text(translate(context, 'select_all')),
+                      ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            tempSelectedZones.clear();
+                          });
+                        },
+                        child: Text(translate(context, 'clear_all')),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Checkbox list
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: displayedZones.length,
+                      itemBuilder: (context, index) {
+                        final zone = displayedZones[index];
+                        return CheckboxListTile(
+                          title: Text(zone.getName(context)),
+                          value: tempSelectedZones.contains(zone.id),
+                          onChanged: (bool? value) {
+                            setState(() {
+                              if (value == true) {
+                                tempSelectedZones.add(zone.id);
+                              } else {
+                                tempSelectedZones.remove(zone.id);
+                              }
+                            });
+                          },
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, null),
+                child: Text(translate(context, 'cancel')),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context, Set<String>.from(tempSelectedZones));
+                },
+                child: Text(translate(context, 'apply')),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        _selectedZoneFilters = result;
+      });
+    }
+  }
+
+  Future<void> _showPerformerFilterDialog() async {
+    final tempSelectedPerformers = Set<String>.from(_selectedPerformerFilters);
+    final performers = _getUniquePerformers();
+
+    if (performers.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(translate(context, 'no_performers_found')),
+        ),
+      );
+      return;
+    }
+
+    final result = await showDialog<Set<String>>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          // Create a filtered list for searching
+          List<String> displayedPerformers = List.from(performers);
+
+          return AlertDialog(
+            title: Text(translate(context, 'filter_by_performer')),
+            content: SizedBox(
+              width: double.maxFinite,
+              height: 400,
+              child: Column(
+                children: [
+                  // Search for performers
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: translate(context, 'search_performers'),
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          if (value.isEmpty) {
+                            displayedPerformers = List.from(performers);
+                          } else {
+                            displayedPerformers = performers.where((performer) {
+                              return performer
+                                  .toLowerCase()
+                                  .contains(value.toLowerCase());
+                            }).toList();
+                          }
+                        });
+                      },
+                    ),
+                  ),
+
+                  // Select All / Clear All buttons
+                  Row(
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            tempSelectedPerformers.clear();
+                            tempSelectedPerformers.addAll(performers);
+                          });
+                        },
+                        child: Text(translate(context, 'select_all')),
+                      ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            tempSelectedPerformers.clear();
+                          });
+                        },
+                        child: Text(translate(context, 'clear_all')),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Checkbox list
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: displayedPerformers.length,
+                      itemBuilder: (context, index) {
+                        final performer = displayedPerformers[index];
+                        return CheckboxListTile(
+                          title: Text(performer),
+                          value: tempSelectedPerformers.contains(performer),
+                          onChanged: (bool? value) {
+                            setState(() {
+                              if (value == true) {
+                                tempSelectedPerformers.add(performer);
+                              } else {
+                                tempSelectedPerformers.remove(performer);
+                              }
+                            });
+                          },
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, null),
+                child: Text(translate(context, 'cancel')),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(
+                      context, Set<String>.from(tempSelectedPerformers));
+                },
+                child: Text(translate(context, 'apply')),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        _selectedPerformerFilters = result;
+      });
+    }
+  }
+
+  Future<void> _showDateFilterDialog() async {
+    final selectedDate = await showDatePicker(
+      context: context,
+      initialDate: _selectedDateFilter ?? DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+    );
+
+    if (selectedDate != null) {
+      setState(() {
+        _selectedDateFilter = selectedDate;
+      });
+    }
+  }
+
+  String _getStatusText(ReportStatus status) {
+    switch (status) {
+      case ReportStatus.inProgress:
+        return translate(context, 'in_progress');
+      case ReportStatus.done:
+        return translate(context, 'completed');
+      case ReportStatus.hazard:
+        return translate(context, 'hazard');
+    }
   }
 
   void _showDeleteDateConfirmation(String dateKey, List<ReportModel> reports,
@@ -624,15 +1558,13 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
     );
   }
 
-// ==== CHANGE START: REFRESH DATA AFTER UNARCHIVING ====
   void _unarchiveReport(
       ReportModel report, ReportProvider reportProvider) async {
     try {
       await reportProvider.unarchiveReport(report.id);
 
-      // Refresh the archived reports list after successful unarchive
       setState(() {
-        _hasLoadedInitialData = false; // This will trigger a reload
+        _hasLoadedInitialData = false;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -643,7 +1575,6 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
         ),
       );
 
-      // Optional: Wait a bit then reload the data
       await Future.delayed(const Duration(milliseconds: 500));
       _loadInitialData();
     } catch (e) {
@@ -655,5 +1586,4 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
       );
     }
   }
-// ==== CHANGE END ====
 }
