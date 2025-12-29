@@ -183,7 +183,15 @@
   "clear_all": "Clear All",
   "apply": "Apply",
   "search_zones": "Search zones...",
-  "search_performers": "Search performers..."
+  "search_performers": "Search performers...",
+  "load_more_reports": "Load More Reports",
+  "loading_more_reports": "Loading more reports...",
+  "no_more_reports": "No more reports to load",
+  "error_loading_reports": "Error loading reports. Please try again.",
+  "reports_loaded": "Reports loaded",
+  "select_date": "Select Date"
+
+
 }
   
 

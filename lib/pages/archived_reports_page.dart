@@ -40,7 +40,7 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
 
   // MULTI-SELECT FILTER VARIABLES (using Sets for multiple selections)
   Set<ReportType> _selectedTypeFilters = {};
-  Set<ReportStatus> _selectedStatusFilters = {};
+  // Set<ReportStatus> _selectedStatusFilters = {};
   Set<String> _selectedZoneFilters = {};
   Set<String> _selectedPerformerFilters = {};
   DateTime? _selectedDateFilter;
@@ -91,18 +91,31 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
   }
 
   void _onScroll() {
-    if (_searchQuery.isEmpty &&
-        _selectedTypeFilters.isEmpty &&
-        _selectedStatusFilters.isEmpty &&
-        _selectedZoneFilters.isEmpty &&
-        _selectedPerformerFilters.isEmpty &&
-        _selectedDateFilter == null &&
-        _scrollController.position.pixels >=
-            _scrollController.position.maxScrollExtent - 100 &&
-        !_isLoadingMore &&
-        _hasMoreData) {
-      _loadMoreData();
+    // Check if we've scrolled to the bottom (with a 100px buffer)
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 100) {
+      // Only load more if we're not already loading and there's more data
+      if (!_isLoadingMore && _hasMoreData) {
+        // Check if we should load more based on filters
+        if (_hasActiveFilters()) {
+          // With filters applied, we need to check if we should continue loading
+          // the unfiltered data for pagination
+          _loadMoreData();
+        } else {
+          // No filters, normal pagination
+          _loadMoreData();
+        }
+      }
     }
+  }
+
+// Helper method to check if any filters are active
+  bool _hasActiveFilters() {
+    return _searchQuery.isNotEmpty ||
+        _selectedTypeFilters.isNotEmpty ||
+        _selectedZoneFilters.isNotEmpty ||
+        _selectedPerformerFilters.isNotEmpty ||
+        _selectedDateFilter != null;
   }
 
   Future<void> _loadInitialData() async {
@@ -164,6 +177,7 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
 
     if (siteProvider.currentSite != null) {
       try {
+        // Always load the next page of archived reports
         final nextPageReports =
             await reportProvider.loadArchivedReportsPaginated(
           siteId: siteProvider.currentSite!.id,
@@ -238,11 +252,11 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
     }
 
     // Apply status filters (multiple selection)
-    if (_selectedStatusFilters.isNotEmpty) {
-      filteredReports = filteredReports
-          .where((report) => _selectedStatusFilters.contains(report.status))
-          .toList();
-    }
+    // if (_selectedStatusFilters.isNotEmpty) {
+    //   filteredReports = filteredReports
+    //       .where((report) => _selectedStatusFilters.contains(report.status))
+    //       .toList();
+    // }
 
     // Apply zone filters (multiple selection)
     if (_selectedZoneFilters.isNotEmpty) {
@@ -318,7 +332,7 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
           // Clear filters button
           if (_searchQuery.isNotEmpty ||
               _selectedTypeFilters.isNotEmpty ||
-              _selectedStatusFilters.isNotEmpty ||
+              // _selectedStatusFilters.isNotEmpty ||
               _selectedZoneFilters.isNotEmpty ||
               _selectedPerformerFilters.isNotEmpty ||
               _selectedDateFilter != null)
@@ -392,7 +406,7 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
           final filteredReportsByDate = _applyFilters();
           final hasActiveFilters = _searchQuery.isNotEmpty ||
               _selectedTypeFilters.isNotEmpty ||
-              _selectedStatusFilters.isNotEmpty ||
+              // _selectedStatusFilters.isNotEmpty ||
               _selectedZoneFilters.isNotEmpty ||
               _selectedPerformerFilters.isNotEmpty ||
               _selectedDateFilter != null;
@@ -498,14 +512,14 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
                   const SizedBox(width: 8),
 
                   // Status Filter
-                  _buildFilterChip(
-                    label: translate(context, 'status'),
-                    icon: Icons.stairs,
-                    onTap: () => _showStatusFilterDialog(),
-                    isActive: _selectedStatusFilters.isNotEmpty,
-                    count: _selectedStatusFilters.length,
-                  ),
-                  const SizedBox(width: 8),
+                  // _buildFilterChip(
+                  //   label: translate(context, 'status'),
+                  //   icon: Icons.stairs,
+                  //   onTap: () => _showStatusFilterDialog(),
+                  //   isActive: _selectedStatusFilters.isNotEmpty,
+                  //   count: _selectedStatusFilters.length,
+                  // ),
+                  // const SizedBox(width: 8),
 
                   // Zone Filter
                   _buildFilterChip(
@@ -632,16 +646,16 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
     }
 
     // Status filters
-    for (final status in _selectedStatusFilters) {
-      chips.add(_buildActiveFilterChip(
-        label: 'Status: ${status.name}',
-        onRemove: () {
-          setState(() {
-            _selectedStatusFilters.remove(status);
-          });
-        },
-      ));
-    }
+    // for (final status in _selectedStatusFilters) {
+    //   chips.add(_buildActiveFilterChip(
+    //     label: 'Status: ${status.name}',
+    //     onRemove: () {
+    //       setState(() {
+    //         _selectedStatusFilters.remove(status);
+    //       });
+    //     },
+    //   ));
+    // }
 
     // Zone filters
     for (final zone in _selectedZoneFilters) {
@@ -794,9 +808,11 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
         controller: _scrollController,
         padding: const EdgeInsets.all(16),
         itemCount: archivedReportsByDate.length +
-            (!hasActiveFilters && (_hasMoreData || _isLoadingMore) ? 1 : 0),
+            (!_isLoadingMore && _hasMoreData ? 1 : 0) +
+            (_isLoadingMore ? 1 : 0),
         itemBuilder: (context, index) {
-          if (index == archivedReportsByDate.length && !hasActiveFilters) {
+          // Show loading indicator at the end if loading more
+          if (index == archivedReportsByDate.length) {
             if (_isLoadingMore) {
               return _buildLoadingIndicator();
             } else if (_hasMoreData) {
@@ -804,6 +820,23 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
             } else {
               return const SizedBox.shrink();
             }
+          }
+
+          // Show "load more" button after the last item if there's more data
+          if (index == archivedReportsByDate.length - 1 &&
+              _hasMoreData &&
+              !_isLoadingMore) {
+            return Column(
+              children: [
+                _buildDateSection(
+                  archivedReportsByDate.keys.elementAt(index),
+                  archivedReportsByDate.values.elementAt(index),
+                  reportProvider,
+                  isAdmin,
+                ),
+                _buildLoadMoreTrigger(),
+              ],
+            );
           }
 
           final dateKey = archivedReportsByDate.keys.elementAt(index);
@@ -988,7 +1021,7 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
       _searchController.clear();
       _searchQuery = '';
       _selectedTypeFilters.clear();
-      _selectedStatusFilters.clear();
+      // _selectedStatusFilters.clear();
       _selectedZoneFilters.clear();
       _selectedPerformerFilters.clear();
       _selectedDateFilter = null;
@@ -1089,92 +1122,92 @@ class _ArchivedReportsPageState extends State<ArchivedReportsPage>
     }
   }
 
-  Future<void> _showStatusFilterDialog() async {
-    final tempSelectedStatuses = Set<ReportStatus>.from(_selectedStatusFilters);
+  // Future<void> _showStatusFilterDialog() async {
+  //   final tempSelectedStatuses = Set<ReportStatus>.from(_selectedStatusFilters);
 
-    final result = await showDialog<Set<ReportStatus>>(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            title: Text(translate(context, 'filter_by_status')),
-            content: SizedBox(
-              width: double.maxFinite,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Select All / Clear All buttons
-                  Row(
-                    children: [
-                      TextButton(
-                        onPressed: () {
-                          setState(() {
-                            tempSelectedStatuses.clear();
-                            tempSelectedStatuses.addAll(ReportStatus.values);
-                          });
-                        },
-                        child: Text(translate(context, 'select_all')),
-                      ),
-                      const Spacer(),
-                      TextButton(
-                        onPressed: () {
-                          setState(() {
-                            tempSelectedStatuses.clear();
-                          });
-                        },
-                        child: Text(translate(context, 'clear_all')),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
+  //   final result = await showDialog<Set<ReportStatus>>(
+  //     context: context,
+  //     builder: (context) => StatefulBuilder(
+  //       builder: (context, setState) {
+  //         return AlertDialog(
+  //           title: Text(translate(context, 'filter_by_status')),
+  //           content: SizedBox(
+  //             width: double.maxFinite,
+  //             child: Column(
+  //               mainAxisSize: MainAxisSize.min,
+  //               children: [
+  //                 // Select All / Clear All buttons
+  //                 Row(
+  //                   children: [
+  //                     TextButton(
+  //                       onPressed: () {
+  //                         setState(() {
+  //                           tempSelectedStatuses.clear();
+  //                           tempSelectedStatuses.addAll(ReportStatus.values);
+  //                         });
+  //                       },
+  //                       child: Text(translate(context, 'select_all')),
+  //                     ),
+  //                     const Spacer(),
+  //                     TextButton(
+  //                       onPressed: () {
+  //                         setState(() {
+  //                           tempSelectedStatuses.clear();
+  //                         });
+  //                       },
+  //                       child: Text(translate(context, 'clear_all')),
+  //                     ),
+  //                   ],
+  //                 ),
+  //                 const SizedBox(height: 8),
 
-                  // Checkbox list
-                  Column(
-                    children: ReportStatus.values.map((status) {
-                      return CheckboxListTile(
-                        title: Text(_getStatusText(status)),
-                        value: tempSelectedStatuses.contains(status),
-                        onChanged: (bool? value) {
-                          setState(() {
-                            if (value == true) {
-                              tempSelectedStatuses.add(status);
-                            } else {
-                              tempSelectedStatuses.remove(status);
-                            }
-                          });
-                        },
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                      );
-                    }).toList(),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, null),
-                child: Text(translate(context, 'cancel')),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(
-                      context, Set<ReportStatus>.from(tempSelectedStatuses));
-                },
-                child: Text(translate(context, 'apply')),
-              ),
-            ],
-          );
-        },
-      ),
-    );
+  //                 // Checkbox list
+  //                 Column(
+  //                   children: ReportStatus.values.map((status) {
+  //                     return CheckboxListTile(
+  //                       title: Text(_getStatusText(status)),
+  //                       value: tempSelectedStatuses.contains(status),
+  //                       onChanged: (bool? value) {
+  //                         setState(() {
+  //                           if (value == true) {
+  //                             tempSelectedStatuses.add(status);
+  //                           } else {
+  //                             tempSelectedStatuses.remove(status);
+  //                           }
+  //                         });
+  //                       },
+  //                       dense: true,
+  //                       contentPadding: EdgeInsets.zero,
+  //                     );
+  //                   }).toList(),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //           actions: [
+  //             TextButton(
+  //               onPressed: () => Navigator.pop(context, null),
+  //               child: Text(translate(context, 'cancel')),
+  //             ),
+  //             ElevatedButton(
+  //               onPressed: () {
+  //                 Navigator.pop(
+  //                     context, Set<ReportStatus>.from(tempSelectedStatuses));
+  //               },
+  //               child: Text(translate(context, 'apply')),
+  //             ),
+  //           ],
+  //         );
+  //       },
+  //     ),
+  //   );
 
-    if (result != null) {
-      setState(() {
-        _selectedStatusFilters = result;
-      });
-    }
-  }
+  //   if (result != null) {
+  //     setState(() {
+  //       _selectedStatusFilters = result;
+  //     });
+  //   }
+  // }
 
   Future<void> _showZoneFilterDialog(SiteProvider siteProvider) async {
     final tempSelectedZones = Set<String>.from(_selectedZoneFilters);

@@ -191,7 +191,13 @@
   "clear_all": "هەمیا ژێببە",
   "apply": "جێبەجێکردن",
   "search_zones": " گەڕیان ل زۆنی...",
-  "search_performers": "گەڕیان ل ئەنجامدەری ..."
+  "search_performers": "گەڕیان ل ئەنجامدەری ...",
+  "load_more_reports": "زێدەتر راپورتان لود بکە",
+  "loading_more_reports": "   لود کرنا راپورتا...",
+  "no_more_reports": "راپورت نەمان",  
+  "error_loading_reports": "ئیرور ل لود کردنا راپورتان. هیبیە دووبارە هەوڵ بدە.",
+  "reports_loaded": "راپورت هاتنە لود کرن",
+  "select_date": "بەرواری هەلبژێرە"
 }
   
 
