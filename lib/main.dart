@@ -291,7 +291,9 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
       if (user.email == 'beta@karband.com' ||
           user.email == 'milet@karband.com' ||
           user.email == 'jagar@karband.com' ||
-          user.email == 'aras@karband.com') {
+          user.email == 'aras@karband.com' ||
+          user.email == 'saleh@karband.com' ||
+          user.email == 'ahmed@karband.com') {
         await FirebaseFirestore.instance.collection('app_usage').add({
           'userId': user.uid,
           'userEmail': user.email,
